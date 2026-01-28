@@ -6,17 +6,2663 @@
     <title>Gina's Hostel - Admin Portal</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
     <style>
-        /* Admin portal styles with approval system */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .sidebar-item.active {
+            background: linear-gradient(90deg, #3b82f6 0%, #1d4ed8 100%);
+            color: white;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dashboard-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .dashboard-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+        }
     </style>
 </head>
-<body>
-    <!-- Admin portal with:
-    1. Pending Approvals Section
-    2. Approved Residents Management
-    3. Room Assignment
-    4. Emergency Contact Display
-    5. All resident data access
-    -->
+<body class="bg-gray-50 min-h-screen">
+    <!-- Admin Navigation -->
+    <nav class="bg-gradient-to-r from-blue-900 to-blue-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="flex items-center gap-2 hover:text-blue-200 transition">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Main</span>
+                    </a>
+                    <div class="h-6 w-px bg-white/30"></div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">Admin Portal</h1>
+                            <p class="text-xs opacity-90">Full System Control Panel</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <div class="relative" id="notificationContainer">
+                        <button onclick="toggleNotifications()" class="p-2 hover:bg-white/10 rounded-lg relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notificationCount" class="notification-badge hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                            <!-- Notifications will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <div class="hidden md:flex items-center gap-3">
+                        <span id="currentTime" class="text-sm"></span>
+                    </div>
+                    
+                    <button onclick="logoutAdmin()" class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Emergency Banner -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white py-2">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <span class="font-medium">Emergency Contacts:</span>
+                    <span>Caretaker Garry: <a href="tel:+263711391414" class="font-bold underline">+263 71 139 1414</a></span>
+                    <span>• WhatsApp: <a href="https://wa.me/263771308790" target="_blank" class="font-bold underline">+263 77 130 8790</a></span>
+                </div>
+                <span id="currentDate" class="text-sm"></span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-4">
+        <!-- Quick Stats -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- Total Residents -->
+            <div class="dashboard-card bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-slate-500">Total Residents</div>
+                        <div class="text-3xl font-bold text-slate-800" id="statResidents">0</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="flex justify-between text-sm">
+                        <span class="text-slate-600">Capacity: 13</span>
+                        <span class="font-medium" id="statCapacity">0% full</span>
+                    </div>
+                    <div class="w-full bg-slate-200 rounded-full h-2 mt-1">
+                        <div id="capacityBar" class="bg-blue-600 h-2 rounded-full" style="width: 0%"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Approvals -->
+            <div class="dashboard-card bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-slate-500">Pending Approvals</div>
+                        <div class="text-3xl font-bold text-amber-600" id="statPending">0</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                        <i class="fas fa-clock text-amber-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="#approvals" onclick="showSection('approvals')" 
+                       class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                        <span>Review Now</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Monthly Revenue -->
+            <div class="dashboard-card bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-slate-500">Monthly Revenue</div>
+                        <div class="text-3xl font-bold text-emerald-600" id="statRevenue">$0</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                        <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <div class="text-sm text-slate-600" id="revenueChange">vs last month</div>
+                </div>
+            </div>
+
+            <!-- Open Issues -->
+            <div class="dashboard-card bg-white rounded-xl p-6 shadow-lg">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <div class="text-sm text-slate-500">Open Issues</div>
+                        <div class="text-3xl font-bold text-red-600" id="statIssues">0</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4">
+                    <a href="#issues" onclick="showSection('issues')" 
+                       class="text-sm text-blue-600 hover:text-blue-700 font-medium flex items-center gap-1">
+                        <span>View Issues</span>
+                        <i class="fas fa-arrow-right"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Area -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Sidebar -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl shadow-lg p-4 sticky top-4">
+                    <div class="space-y-2">
+                        <button onclick="showSection('dashboard')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item active" 
+                                id="btnDashboard">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </button>
+                        
+                        <button onclick="showSection('approvals')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnApprovals">
+                            <i class="fas fa-user-check mr-3"></i>
+                            Approve Residents
+                            <span id="approvalBadge" class="ml-2 px-2 py-1 bg-amber-500 text-white text-xs rounded-full hidden">0</span>
+                        </button>
+                        
+                        <button onclick="showSection('residents')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnResidents">
+                            <i class="fas fa-users mr-3"></i>
+                            Manage Residents
+                        </button>
+                        
+                        <button onclick="showSection('payments')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnPayments">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            Payment Tracking
+                        </button>
+                        
+                        <button onclick="showSection('issues')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnIssues">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            Issue Management
+                            <span id="issueBadge" class="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full hidden">0</span>
+                        </button>
+                        
+                        <button onclick="showSection('whatsapp')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnWhatsApp">
+                            <i class="fab fa-whatsapp mr-3"></i>
+                            WhatsApp Notifications
+                        </button>
+                        
+                        <button onclick="showSection('reports')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnReports">
+                            <i class="fas fa-file-export mr-3"></i>
+                            Generate Reports
+                        </button>
+                        
+                        <button onclick="showSection('settings')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-blue-50 transition sidebar-item" 
+                                id="btnSettings">
+                            <i class="fas fa-cog mr-3"></i>
+                            System Settings
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <h3 class="font-bold text-slate-800 mb-3">Quick Actions</h3>
+                        <div class="space-y-2">
+                            <button onclick="sendBulkWhatsApp()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-blue-600 transition">
+                                <i class="fas fa-broadcast-tower mr-2"></i>
+                                Send Bulk Notification
+                            </button>
+                            <button onclick="downloadFullReport()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-blue-600 transition">
+                                <i class="fas fa-download mr-2"></i>
+                                Download Full Report
+                            </button>
+                            <button onclick="checkCapacity()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-blue-600 transition">
+                                <i class="fas fa-home mr-2"></i>
+                                Check Capacity Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Dashboard Section -->
+                <div id="sectionDashboard" class="animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6">System Overview</h2>
+                        
+                        <!-- Charts Row -->
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+                            <!-- Occupancy Chart -->
+                            <div>
+                                <h3 class="font-bold text-slate-700 mb-4">Occupancy Trend</h3>
+                                <div class="h-64">
+                                    <canvas id="occupancyChart"></canvas>
+                                </div>
+                            </div>
+                            
+                            <!-- Revenue Chart -->
+                            <div>
+                                <h3 class="font-bold text-slate-700 mb-4">Revenue Overview</h3>
+                                <div class="h-64">
+                                    <canvas id="revenueChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Recent Activity -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">Recent Activity</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="recentActivityTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Activity</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">User</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="recentActivityBody">
+                                        <!-- Activity rows will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approvals Section -->
+                <div id="sectionApprovals" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">Pending Approvals</h2>
+                            <div class="text-sm text-slate-600">
+                                <span id="approvalCount">0</span> applications waiting
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200" id="approvalTable">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Institution</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Applied On</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="approvalTableBody">
+                                    <!-- Pending applications will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <div id="noPending" class="text-center py-8 hidden">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-700">No Pending Approvals</h3>
+                            <p class="text-slate-600 mt-2">All applications have been processed.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Residents Section -->
+                <div id="sectionResidents" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">Manage Residents</h2>
+                            <div class="flex items-center gap-3">
+                                <div class="text-sm text-slate-600">
+                                    <span id="residentCount">0</span> active residents
+                                </div>
+                                <button onclick="exportResidents()" 
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Export
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200" id="residentTable">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident ID</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Room</th>
+                                        <th class="px6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Phone</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Balance</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="residentTableBody">
+                                    <!-- Residents will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Section -->
+                <div id="sectionPayments" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">Payment Tracking</h2>
+                            <button onclick="recordPayment()" 
+                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Record Payment
+                            </button>
+                        </div>
+                        
+                        <!-- Payment Summary -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-700">Total Collected</div>
+                                <div class="text-2xl font-bold text-blue-900" id="totalCollected">$0</div>
+                            </div>
+                            <div class="bg-amber-50 p-4 rounded-lg">
+                                <div class="text-sm text-amber-700">Pending Payments</div>
+                                <div class="text-2xl font-bold text-amber-900" id="pendingPayments">$0</div>
+                            </div>
+                            <div class="bg-emerald-50 p-4 rounded-lg">
+                                <div class="text-sm text-emerald-700">This Month</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="monthlyPayments">$0</div>
+                            </div>
+                        </div>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200" id="paymentTable">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Resident</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">For Month</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="paymentTableBody">
+                                    <!-- Payments will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issues Section -->
+                <div id="sectionIssues" class="hidden animate-fadeIn">
+                    <!-- Issues content will be loaded dynamically -->
+                </div>
+
+                <!-- WhatsApp Section -->
+                <div id="sectionWhatsApp" class="hidden animate-fadeIn">
+                    <!-- WhatsApp content will be loaded dynamically -->
+                </div>
+
+                <!-- Reports Section -->
+                <div id="sectionReports" class="hidden animate-fadeIn">
+                    <!-- Reports content will be loaded dynamically -->
+                </div>
+
+                <!-- Settings Section -->
+                <div id="sectionSettings" class="hidden animate-fadeIn">
+                    <!-- Settings content will be loaded dynamically -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="recordPaymentModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Record Payment</h3>
+                    <button onclick="hideModal('recordPaymentModal')" class="text-white hover:text-emerald-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="recordPaymentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Select Resident <span class="text-red-500">*</span>
+                        </label>
+                        <select name="residentId" required 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                            <!-- Options will be populated by JavaScript -->
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Amount ($) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" name="amount" step="0.01" required 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Payment Method
+                            </label>
+                            <select name="method" 
+                                    class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                                <option value="Cash">Cash</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Mobile Money">Mobile Money</option>
+                                <option value="Other">Other</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            For Month <span class="text-red-500">*</span>
+                        </label>
+                        <input type="month" name="month" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Notes (Optional)
+                        </label>
+                        <textarea name="notes" rows="3"
+                               class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition"></textarea>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-save mr-2"></i>
+                            Record Payment
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Resident Modal -->
+    <div id="editResidentModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Edit Resident Details</h3>
+                    <button onclick="hideModal('editResidentModal')" class="text-white hover:text-blue-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="editResidentForm" class="space-y-4">
+                    <input type="hidden" id="editResidentId">
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                First Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="editFirstName" required 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Last Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="editLastName" required 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Room Number
+                            </label>
+                            <input type="text" id="editRoom" 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Monthly Rent ($)
+                            </label>
+                            <input type="number" id="editRent" step="0.01"
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Status
+                        </label>
+                        <select id="editStatus" 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-save mr-2"></i>
+                            Save Changes
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentSection = 'dashboard';
+        let occupancyChart = null;
+        let revenueChart = null;
+        
+        // Check admin authentication
+        function checkAdminAuth() {
+            const loggedIn = localStorage.getItem('adminLoggedIn');
+            const loginTime = localStorage.getItem('adminLoginTime');
+            
+            if (!loggedIn || !loginTime) {
+                window.location.href = 'index.html';
+                return false;
+            }
+            
+            // Check if session is expired (8 hours)
+            const loginDate = new Date(loginTime);
+            const now = new Date();
+            const hoursDiff = (now - loginDate) / (1000 * 60 * 60);
+            
+            if (hoursDiff > 8) {
+                localStorage.removeItem('adminLoggedIn');
+                localStorage.removeItem('adminLoginTime');
+                window.location.href = 'index.html';
+                return false;
+            }
+            
+            return true;
+        }
+        
+        // Logout admin
+        function logoutAdmin() {
+            localStorage.removeItem('adminLoggedIn');
+            localStorage.removeItem('adminLoginTime');
+            window.location.href = 'index.html';
+        }
+        
+        // Show/hide sections
+        function showSection(sectionId) {
+            // Hide all sections
+            document.querySelectorAll('[id^="section"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected section
+            document.getElementById(`section${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}`).classList.remove('hidden');
+            
+            // Add active class to clicked button
+            document.getElementById(`btn${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}`).classList.add('active');
+            
+            // Update current section
+            currentSection = sectionId;
+            
+            // Load section data
+            loadSectionData(sectionId);
+        }
+        
+        // Load section data
+        function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'approvals':
+                    loadApprovals();
+                    break;
+                case 'residents':
+                    loadResidents();
+                    break;
+                case 'payments':
+                    loadPayments();
+                    break;
+                case 'issues':
+                    loadIssues();
+                    break;
+                case 'whatsapp':
+                    loadWhatsApp();
+                    break;
+                case 'reports':
+                    loadReports();
+                    break;
+                case 'settings':
+                    loadSettings();
+                    break;
+            }
+        }
+        
+        // Load dashboard
+        function loadDashboard() {
+            updateStats();
+            loadRecentActivity();
+            initCharts();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const pending = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                
+                // Update counts
+                const currentResidents = residents.length;
+                const pendingCount = pending.length;
+                const openIssues = issues.filter(issue => issue.status === 'open').length;
+                const occupancyPercent = Math.round((currentResidents / 13) * 100);
+                
+                document.getElementById('statResidents').textContent = currentResidents;
+                document.getElementById('statPending').textContent = pendingCount;
+                document.getElementById('statIssues').textContent = openIssues;
+                document.getElementById('statCapacity').textContent = `${occupancyPercent}% full`;
+                document.getElementById('capacityBar').style.width = `${occupancyPercent}%`;
+                
+                // Update approval badge
+                const approvalBadge = document.getElementById('approvalBadge');
+                if (pendingCount > 0) {
+                    approvalBadge.textContent = pendingCount;
+                    approvalBadge.classList.remove('hidden');
+                } else {
+                    approvalBadge.classList.add('hidden');
+                }
+                
+                // Update issue badge
+                const issueBadge = document.getElementById('issueBadge');
+                if (openIssues > 0) {
+                    issueBadge.textContent = openIssues;
+                    issueBadge.classList.remove('hidden');
+                } else {
+                    issueBadge.classList.add('hidden');
+                }
+                
+                // Update notification count
+                const notificationCount = document.getElementById('notificationCount');
+                const totalNotifications = pendingCount + openIssues;
+                if (totalNotifications > 0) {
+                    notificationCount.textContent = totalNotifications;
+                    notificationCount.classList.remove('hidden');
+                } else {
+                    notificationCount.classList.add('hidden');
+                }
+                
+                // Calculate revenue
+                let monthlyRevenue = 0;
+                let totalCollected = 0;
+                let pendingPayments = 0;
+                const thisMonth = new Date().getMonth();
+                
+                residents.forEach(resident => {
+                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                    payments.forEach(payment => {
+                        totalCollected += parseFloat(payment.amount) || 0;
+                        const paymentMonth = new Date(payment.date).getMonth();
+                        if (paymentMonth === thisMonth) {
+                            monthlyRevenue += parseFloat(payment.amount) || 0;
+                        }
+                    });
+                    
+                    // Calculate pending payments
+                    if (resident.monthlyRent > 0) {
+                        const paidThisMonth = payments.some(p => {
+                            const pMonth = new Date(p.date).getMonth();
+                            return pMonth === thisMonth;
+                        });
+                        
+                        if (!paidThisMonth) {
+                            pendingPayments += parseFloat(resident.monthlyRent) || 0;
+                        }
+                    }
+                });
+                
+                document.getElementById('statRevenue').textContent = `$${monthlyRevenue.toFixed(2)}`;
+                document.getElementById('totalCollected').textContent = `$${totalCollected.toFixed(2)}`;
+                document.getElementById('pendingPayments').textContent = `$${pendingPayments.toFixed(2)}`;
+                document.getElementById('monthlyPayments').textContent = `$${monthlyRevenue.toFixed(2)}`;
+                
+            } catch (e) {
+                console.error('Error updating stats:', e);
+            }
+        }
+        
+        // Load recent activity
+        function loadRecentActivity() {
+            try {
+                const activityLog = JSON.parse(localStorage.getItem('adminActivityLog') || '[]');
+                const tbody = document.getElementById('recentActivityBody');
+                
+                if (activityLog.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-slate-500">
+                                No recent activity
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Sort by timestamp (newest first) and take last 10
+                const recentActivities = activityLog
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                    .slice(0, 10);
+                
+                tbody.innerHTML = recentActivities.map(activity => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            ${new Date(activity.timestamp).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            ${activity.action}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            ${activity.user || 'System'}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            ${activity.details || ''}
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading activity:', e);
+            }
+        }
+        
+        // Initialize charts
+        function initCharts() {
+            // Destroy existing charts
+            if (occupancyChart) occupancyChart.destroy();
+            if (revenueChart) revenueChart.destroy();
+            
+            // Occupancy Chart
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const ctx1 = document.getElementById('occupancyChart').getContext('2d');
+            
+            // Calculate occupancy by room type
+            const roomTypes = ['Ensuite', 'Blue White', 'Black Gold', 'Crystal 1', 'Crystal 2'];
+            const occupancyData = roomTypes.map(room => {
+                return residents.filter(r => r.roomAssigned === room).length;
+            });
+            
+            occupancyChart = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: roomTypes,
+                    datasets: [{
+                        label: 'Residents',
+                        data: occupancyData,
+                        backgroundColor: [
+                            'rgba(59, 130, 246, 0.7)',
+                            'rgba(99, 102, 241, 0.7)',
+                            'rgba(139, 92, 246, 0.7)',
+                            'rgba(236, 72, 153, 0.7)',
+                            'rgba(245, 158, 11, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(59, 130, 246)',
+                            'rgb(99, 102, 241)',
+                            'rgb(139, 92, 246)',
+                            'rgb(236, 72, 153)',
+                            'rgb(245, 158, 11)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 5,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Revenue Chart
+            const ctx2 = document.getElementById('revenueChart').getContext('2d');
+            const payments = getAllPayments();
+            
+            // Group by month
+            const monthlyRevenue = {};
+            payments.forEach(payment => {
+                const date = new Date(payment.date);
+                const monthYear = `${date.getMonth() + 1}/${date.getFullYear()}`;
+                if (!monthlyRevenue[monthYear]) {
+                    monthlyRevenue[monthYear] = 0;
+                }
+                monthlyRevenue[monthYear] += parseFloat(payment.amount);
+            });
+            
+            const months = Object.keys(monthlyRevenue).slice(-6); // Last 6 months
+            const revenueData = months.map(month => monthlyRevenue[month]);
+            
+            revenueChart = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Revenue ($)',
+                        data: revenueData,
+                        borderColor: 'rgb(34, 197, 94)',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+        
+        // Get all payments
+        function getAllPayments() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                let allPayments = [];
+                
+                residents.forEach(resident => {
+                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                    payments.forEach(payment => {
+                        allPayments.push({
+                            ...payment,
+                            residentName: resident.fullName
+                        });
+                    });
+                });
+                
+                return allPayments;
+            } catch (e) {
+                console.error('Error getting payments:', e);
+                return [];
+            }
+        }
+        
+        // Load approvals
+        function loadApprovals() {
+            try {
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                const tbody = document.getElementById('approvalTableBody');
+                const noPendingDiv = document.getElementById('noPending');
+                
+                document.getElementById('approvalCount').textContent = pendingResidents.length;
+                
+                if (pendingResidents.length === 0) {
+                    tbody.innerHTML = '';
+                    noPendingDiv.classList.remove('hidden');
+                    return;
+                }
+                
+                noPendingDiv.classList.add('hidden');
+                tbody.innerHTML = pendingResidents.map(resident => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-blue-600"></i>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        ${resident.fullName}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        ${resident.idNumber}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${resident.phone}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${resident.institution}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(resident.requestedAt).toLocaleDateString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <div class="flex gap-2">
+                                <button onclick="approveResident('${resident.id}')" 
+                                        class="text-emerald-600 hover:text-emerald-900">
+                                    <i class="fas fa-check-circle mr-1"></i> Approve
+                                </button>
+                                <button onclick="rejectResident('${resident.id}')" 
+                                        class="text-red-600 hover:text-red-900">
+                                    <i class="fas fa-times-circle mr-1"></i> Reject
+                                </button>
+                                <button onclick="viewResidentDetails('${resident.id}')" 
+                                        class="text-blue-600 hover:text-blue-900">
+                                    <i class="fas fa-eye mr-1"></i> View
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading approvals:', e);
+            }
+        }
+        
+        // Approve resident
+        function approveResident(residentId) {
+            try {
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                const approvedResidents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                
+                // Check capacity
+                if (approvedResidents.length >= 13) {
+                    alert('Cannot approve: Hostel is at full capacity (13 residents)');
+                    return;
+                }
+                
+                const residentIndex = pendingResidents.findIndex(r => r.id === residentId);
+                if (residentIndex === -1) return;
+                
+                const resident = pendingResidents[residentIndex];
+                
+                // Update resident status
+                resident.status = 'approved';
+                resident.approvedAt = new Date().toISOString();
+                resident.checkinDate = new Date().toISOString();
+                
+                // Remove from pending
+                pendingResidents.splice(residentIndex, 1);
+                localStorage.setItem('pendingResidents', JSON.stringify(pendingResidents));
+                
+                // Add to approved
+                approvedResidents.push(resident);
+                localStorage.setItem('approvedResidents', JSON.stringify(approvedResidents));
+                
+                // Log activity
+                logActivity('Resident Approved', `Approved ${resident.fullName}`, 'Admin');
+                
+                // Send WhatsApp notification
+                sendWhatsAppNotification(resident.phone, 
+                    `Hello ${resident.firstName}, your check-in request for Gina's Hostel has been approved! You can now log in to your dashboard at [Your Portal Link] using your phone number and password.`);
+                
+                // Update UI
+                updateStats();
+                loadApprovals();
+                
+                alert(`Resident ${resident.fullName} approved successfully! WhatsApp notification sent.`);
+                
+            } catch (e) {
+                console.error('Error approving resident:', e);
+                alert('Error approving resident');
+            }
+        }
+        
+        // Reject resident
+        function rejectResident(residentId) {
+            if (!confirm('Are you sure you want to reject this application?')) return;
+            
+            try {
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                const residentIndex = pendingResidents.findIndex(r => r.id === residentId);
+                
+                if (residentIndex === -1) return;
+                
+                const resident = pendingResidents[residentIndex];
+                
+                // Remove from pending
+                pendingResidents.splice(residentIndex, 1);
+                localStorage.setItem('pendingResidents', JSON.stringify(pendingResidents));
+                
+                // Log activity
+                logActivity('Resident Rejected', `Rejected ${resident.fullName}`, 'Admin');
+                
+                // Send rejection notification
+                sendWhatsAppNotification(resident.phone,
+                    `Hello ${resident.firstName}, we regret to inform you that your check-in request for Gina's Hostel has not been approved at this time.`);
+                
+                // Update UI
+                updateStats();
+                loadApprovals();
+                
+                alert(`Resident ${resident.fullName} rejected.`);
+                
+            } catch (e) {
+                console.error('Error rejecting resident:', e);
+                alert('Error rejecting resident');
+            }
+        }
+        
+        // Load residents
+        function loadResidents() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const tbody = document.getElementById('residentTableBody');
+                
+                document.getElementById('residentCount').textContent = residents.length;
+                
+                if (residents.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="7" class="px-6 py-4 text-center text-slate-500">
+                                No residents found
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                tbody.innerHTML = residents.map(resident => {
+                    // Calculate balance
+                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                    const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
+                    const balance = parseFloat(resident.monthlyRent || 0) - totalPaid;
+                    
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${resident.id}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center">
+                                    <div class="flex-shrink-0 h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-user text-blue-600"></i>
+                                    </div>
+                                    <div class="ml-4">
+                                        <div class="text-sm font-medium text-gray-900">
+                                            ${resident.fullName}
+                                        </div>
+                                        <div class="text-sm text-gray-500">
+                                            ${resident.institution}
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${resident.roomAssigned || 'Not assigned'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${resident.phone}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <span class="${balance > 0 ? 'text-red-600' : 'text-emerald-600'}">
+                                    $${balance.toFixed(2)}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    ${resident.status === 'active' ? 'bg-green-100 text-green-800' : 
+                                      resident.status === 'inactive' ? 'bg-red-100 text-red-800' : 
+                                      'bg-yellow-100 text-yellow-800'}">
+                                    ${resident.status}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <div class="flex gap-2">
+                                    <button onclick="editResident('${resident.id}')" 
+                                            class="text-blue-600 hover:text-blue-900">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button onclick="viewResidentPayments('${resident.id}')" 
+                                            class="text-emerald-600 hover:text-emerald-900">
+                                        <i class="fas fa-money-bill-wave"></i>
+                                    </button>
+                                    <button onclick="sendResidentNotification('${resident.id}')" 
+                                            class="text-green-600 hover:text-green-900">
+                                        <i class="fab fa-whatsapp"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading residents:', e);
+            }
+        }
+        
+        // Load payments
+        function loadPayments() {
+            try {
+                const payments = getAllPayments();
+                const tbody = document.getElementById('paymentTableBody');
+                
+                if (payments.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-slate-500">
+                                No payments recorded
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                tbody.innerHTML = payments.map(payment => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${new Date(payment.date).toLocaleDateString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            ${payment.residentName}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-emerald-600">
+                            $${parseFloat(payment.amount).toFixed(2)}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${payment.method}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            ${payment.month}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                            <button onclick="deletePayment('${payment.id}')" 
+                                    class="text-red-600 hover:text-red-900">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading payments:', e);
+            }
+        }
+        
+        // Record payment
+        function recordPayment() {
+            // Populate resident dropdown
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const select = document.querySelector('[name="residentId"]');
+            select.innerHTML = residents.map(r => 
+                `<option value="${r.id}">${r.fullName} (${r.phone})</option>`
+            ).join('');
+            
+            // Set current month as default
+            const now = new Date();
+            const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            document.querySelector('[name="month"]').value = currentMonth;
+            
+            showModal('recordPaymentModal');
+        }
+        
+        // Handle record payment form
+        document.getElementById('recordPaymentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData(this);
+            const payment = {
+                id: 'PAY-' + Date.now(),
+                residentId: formData.get('residentId'),
+                amount: formData.get('amount'),
+                method: formData.get('method'),
+                month: formData.get('month'),
+                notes: formData.get('notes'),
+                date: new Date().toISOString(),
+                recordedBy: 'Admin'
+            };
+            
+            try {
+                // Save payment
+                const payments = JSON.parse(localStorage.getItem(`payments_${payment.residentId}`) || '[]');
+                payments.push(payment);
+                localStorage.setItem(`payments_${payment.residentId}`, JSON.stringify(payments));
+                
+                // Log activity
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === payment.residentId);
+                logActivity('Payment Recorded', 
+                    `Recorded $${payment.amount} payment for ${resident?.fullName || payment.residentId}`, 
+                    'Admin');
+                
+                // Send payment confirmation via WhatsApp
+                if (resident) {
+                    sendWhatsAppNotification(resident.phone,
+                        `Hello ${resident.firstName}, we have received your payment of $${payment.amount} for ${payment.month}. Thank you!`);
+                }
+                
+                // Close modal and refresh
+                hideModal('recordPaymentModal');
+                this.reset();
+                updateStats();
+                loadPayments();
+                
+                alert('Payment recorded successfully!');
+                
+            } catch (e) {
+                console.error('Error recording payment:', e);
+                alert('Error recording payment');
+            }
+        });
+        
+        // Edit resident
+        function editResident(residentId) {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === residentId);
+                
+                if (!resident) return;
+                
+                document.getElementById('editResidentId').value = resident.id;
+                document.getElementById('editFirstName').value = resident.firstName;
+                document.getElementById('editLastName').value = resident.lastName;
+                document.getElementById('editRoom').value = resident.roomAssigned || '';
+                document.getElementById('editRent').value = resident.monthlyRent || '';
+                document.getElementById('editStatus').value = resident.status || 'active';
+                
+                showModal('editResidentModal');
+            } catch (e) {
+                console.error('Error editing resident:', e);
+            }
+        }
+        
+        // Handle edit resident form
+        document.getElementById('editResidentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const residentId = document.getElementById('editResidentId').value;
+            const firstName = document.getElementById('editFirstName').value;
+            const lastName = document.getElementById('editLastName').value;
+            const room = document.getElementById('editRoom').value;
+            const rent = document.getElementById('editRent').value;
+            const status = document.getElementById('editStatus').value;
+            
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentIndex = residents.findIndex(r => r.id === residentId);
+                
+                if (residentIndex === -1) return;
+                
+                // Update resident
+                residents[residentIndex].firstName = firstName;
+                residents[residentIndex].lastName = lastName;
+                residents[residentIndex].fullName = `${firstName} ${lastName}`;
+                residents[residentIndex].roomAssigned = room;
+                residents[residentIndex].monthlyRent = rent;
+                residents[residentIndex].status = status;
+                
+                localStorage.setItem('approvedResidents', JSON.stringify(residents));
+                
+                // Log activity
+                logActivity('Resident Updated', 
+                    `Updated details for ${firstName} ${lastName}`, 
+                    'Admin');
+                
+                // Close modal and refresh
+                hideModal('editResidentModal');
+                loadResidents();
+                updateStats();
+                
+                alert('Resident updated successfully!');
+                
+            } catch (e) {
+                console.error('Error updating resident:', e);
+                alert('Error updating resident');
+            }
+        });
+        
+        // Send WhatsApp notification to resident
+        function sendResidentNotification(residentId) {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === residentId);
+                
+                if (!resident) return;
+                
+                const message = prompt(`Send WhatsApp message to ${resident.fullName}:`, 
+                    `Hello ${resident.firstName}, this is a message from Gina's Hostel.`);
+                
+                if (message) {
+                    sendWhatsAppNotification(resident.phone, message);
+                    logActivity('WhatsApp Sent', 
+                        `Sent message to ${resident.fullName}`, 
+                        'Admin');
+                    alert('Message sent!');
+                }
+            } catch (e) {
+                console.error('Error sending notification:', e);
+            }
+        }
+        
+        // Send bulk WhatsApp notification
+        function sendBulkWhatsApp() {
+            const message = prompt('Enter message to send to all residents:', 
+                'Important announcement from Gina\'s Hostel:');
+            
+            if (!message) return;
+            
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                let sentCount = 0;
+                
+                residents.forEach(resident => {
+                    if (resident.whatsappOptIn !== false) {
+                        sendWhatsAppNotification(resident.phone, 
+                            `Hello ${resident.firstName}, ${message}`);
+                        sentCount++;
+                    }
+                });
+                
+                logActivity('Bulk WhatsApp Sent', 
+                    `Sent bulk message to ${sentCount} residents`, 
+                    'Admin');
+                
+                alert(`Message sent to ${sentCount} residents!`);
+                
+            } catch (e) {
+                console.error('Error sending bulk messages:', e);
+            }
+        }
+        
+        // WhatsApp notification function
+        function sendWhatsAppNotification(phone, message) {
+            // Simulate WhatsApp API call
+            const whatsappLog = JSON.parse(localStorage.getItem('whatsappLog') || '[]');
+            whatsappLog.push({
+                phone: phone,
+                message: message,
+                timestamp: new Date().toISOString(),
+                status: 'sent'
+            });
+            localStorage.setItem('whatsappLog', JSON.stringify(whatsappLog));
+            
+            // In a real implementation, this would call a WhatsApp API
+            console.log(`WhatsApp to ${phone}: ${message}`);
+            
+            // For demo purposes, we'll create a clickable link
+            const encodedMessage = encodeURIComponent(message);
+            const whatsappUrl = `https://wa.me/${phone.replace(/\D/g, '')}?text=${encodedMessage}`;
+            
+            // Open in new tab (for demo)
+            window.open(whatsappUrl, '_blank');
+        }
+        
+        // Load issues
+        function loadIssues() {
+            const section = document.getElementById('sectionIssues');
+            section.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800">Issue Management</h2>
+                        <button onclick="viewAllIssues()" 
+                                class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                            View All Issues
+                        </button>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                        <div class="bg-white border border-slate-200 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-blue-600 mb-2" id="openIssuesCount">0</div>
+                            <div class="text-sm text-slate-600">Open Issues</div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-emerald-600 mb-2" id="resolvedIssuesCount">0</div>
+                            <div class="text-sm text-slate-600">Resolved Issues</div>
+                        </div>
+                        <div class="bg-white border border-slate-200 rounded-lg p-6">
+                            <div class="text-3xl font-bold text-amber-600 mb-2" id="inProgressIssuesCount">0</div>
+                            <div class="text-sm text-slate-600">In Progress</div>
+                        </div>
+                    </div>
+                    
+                    <div id="issuesList">
+                        <!-- Issues will be loaded here -->
+                    </div>
+                </div>
+            `;
+            
+            // Load issues data
+            updateIssuesCount();
+            loadRecentIssues();
+        }
+        
+        // Update issues count
+        function updateIssuesCount() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                
+                const openIssues = issues.filter(i => i.status === 'open').length;
+                const resolvedIssues = issues.filter(i => i.status === 'resolved').length;
+                const inProgressIssues = issues.filter(i => i.status === 'in-progress').length;
+                
+                document.getElementById('openIssuesCount').textContent = openIssues;
+                document.getElementById('resolvedIssuesCount').textContent = resolvedIssues;
+                document.getElementById('inProgressIssuesCount').textContent = inProgressIssues;
+                
+            } catch (e) {
+                console.error('Error updating issues count:', e);
+            }
+        }
+        
+        // Load recent issues
+        function loadRecentIssues() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const container = document.getElementById('issuesList');
+                
+                // Sort by date (newest first) and take last 5
+                const recentIssues = issues
+                    .sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt))
+                    .slice(0, 5);
+                
+                if (recentIssues.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-700">No Issues Reported</h3>
+                            <p class="text-slate-600 mt-2">All systems are functioning properly.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                container.innerHTML = recentIssues.map(issue => `
+                    <div class="border border-slate-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <span class="px-2 py-1 text-xs font-medium rounded-full
+                                        ${issue.status === 'open' ? 'bg-red-100 text-red-800' :
+                                          issue.status === 'in-progress' ? 'bg-amber-100 text-amber-800' :
+                                          'bg-emerald-100 text-emerald-800'}">
+                                        ${issue.status}
+                                    </span>
+                                    <span class="text-sm text-slate-500">
+                                        ${new Date(issue.reportedAt).toLocaleDateString()}
+                                    </span>
+                                </div>
+                                <h4 class="font-bold text-slate-800">${issue.title}</h4>
+                                <p class="text-slate-600 text-sm mt-1">${issue.description}</p>
+                                <div class="flex items-center gap-4 mt-3">
+                                    <span class="text-xs text-slate-500">
+                                        Reported by: ${issue.reportedBy || 'Anonymous'}
+                                    </span>
+                                    <span class="text-xs text-slate-500">
+                                        Room: ${issue.room || 'N/A'}
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="ml-4">
+                                <button onclick="updateIssueStatus('${issue.id}', 'in-progress')" 
+                                        class="px-3 py-1 bg-amber-100 text-amber-800 rounded text-sm hover:bg-amber-200">
+                                    Mark In Progress
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading issues:', e);
+            }
+        }
+        
+        // Update issue status
+        function updateIssueStatus(issueId, status) {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const issueIndex = issues.findIndex(i => i.id === issueId);
+                
+                if (issueIndex === -1) return;
+                
+                issues[issueIndex].status = status;
+                issues[issueIndex].updatedAt = new Date().toISOString();
+                
+                if (status === 'resolved') {
+                    issues[issueIndex].resolvedAt = new Date().toISOString();
+                    issues[issueIndex].resolvedBy = 'Admin';
+                }
+                
+                localStorage.setItem('reportedIssues', JSON.stringify(issues));
+                
+                // Log activity
+                logActivity('Issue Updated', 
+                    `Updated issue "${issues[issueIndex].title}" to ${status}`, 
+                    'Admin');
+                
+                // Refresh issues
+                updateIssuesCount();
+                loadRecentIssues();
+                updateStats();
+                
+                alert(`Issue marked as ${status}`);
+                
+            } catch (e) {
+                console.error('Error updating issue:', e);
+            }
+        }
+        
+        // View all issues
+        function viewAllIssues() {
+            alert('Feature: View all issues with filtering and export options');
+            // This would open a modal or new page with all issues
+        }
+        
+        // Load WhatsApp section
+        function loadWhatsApp() {
+            const section = document.getElementById('sectionWhatsApp');
+            section.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">WhatsApp Notifications</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- Send Individual Message -->
+                        <div class="border border-slate-200 rounded-lg p-6">
+                            <h3 class="font-bold text-slate-700 mb-4">Send Individual Message</h3>
+                            <form id="individualMessageForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Select Resident
+                                    </label>
+                                    <select id="whatsappResident" required 
+                                            class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition">
+                                        <!-- Options will be populated -->
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Message Template
+                                    </label>
+                                    <select id="messageTemplate" 
+                                            class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition">
+                                        <option value="">Custom Message</option>
+                                        <option value="rent_reminder">Rent Payment Reminder</option>
+                                        <option value="maintenance">Maintenance Announcement</option>
+                                        <option value="security">Security Update</option>
+                                        <option value="general">General Announcement</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Message
+                                    </label>
+                                    <textarea id="whatsappMessage" rows="4" required
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"></textarea>
+                                </div>
+                                <button type="submit" 
+                                        class="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold py-3 rounded-lg transition">
+                                    <i class="fab fa-whatsapp mr-2"></i>
+                                    Send WhatsApp Message
+                                </button>
+                            </form>
+                        </div>
+                        
+                        <!-- Send Bulk Message -->
+                        <div class="border border-slate-200 rounded-lg p-6">
+                            <h3 class="font-bold text-slate-700 mb-4">Send Bulk Message</h3>
+                            <form id="bulkMessageForm" class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Recipients
+                                    </label>
+                                    <div class="space-y-2">
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="allResidents" class="mr-2" checked>
+                                            <span>All Residents</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="withBalance" class="mr-2">
+                                            <span>Residents with Outstanding Balance</span>
+                                        </label>
+                                        <label class="flex items-center">
+                                            <input type="checkbox" id="specificRoom" class="mr-2">
+                                            <span>Specific Room Residents</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Message Template
+                                    </label>
+                                    <select id="bulkMessageTemplate" 
+                                            class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"
+                                            onchange="loadBulkTemplate(this.value)">
+                                        <option value="">Custom Message</option>
+                                        <option value="rent_reminder">Rent Payment Reminder</option>
+                                        <option value="maintenance">Maintenance Announcement</option>
+                                        <option value="security">Security Update</option>
+                                        <option value="general">General Announcement</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Message
+                                    </label>
+                                    <textarea id="bulkMessage" rows="4" required
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-green-500 focus:border-green-500 transition"></textarea>
+                                </div>
+                                <button type="submit" 
+                                        class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg transition">
+                                    <i class="fas fa-broadcast-tower mr-2"></i>
+                                    Send Bulk Message
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Message History -->
+                    <div class="mt-8">
+                        <h3 class="font-bold text-slate-700 mb-4">Message History</h3>
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-gray-200">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recipient</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Message</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="whatsappHistory">
+                                    <!-- History will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Populate resident dropdown
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const select = document.getElementById('whatsappResident');
+            select.innerHTML = residents.map(r => 
+                `<option value="${r.id}">${r.fullName} (${r.phone})</option>`
+            ).join('');
+            
+            // Load message history
+            loadWhatsAppHistory();
+            
+            // Set up form handlers
+            setupWhatsAppForms();
+        }
+        
+        // Load WhatsApp history
+        function loadWhatsAppHistory() {
+            try {
+                const history = JSON.parse(localStorage.getItem('whatsappLog') || '[]');
+                const tbody = document.getElementById('whatsappHistory');
+                
+                if (history.length === 0) {
+                    tbody.innerHTML = `
+                        <tr>
+                            <td colspan="4" class="px-6 py-4 text-center text-slate-500">
+                                No messages sent yet
+                            </td>
+                        </tr>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first) and take last 10
+                const recentHistory = history
+                    .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))
+                    .slice(0, 10);
+                
+                tbody.innerHTML = recentHistory.map(msg => `
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
+                            ${new Date(msg.timestamp).toLocaleString()}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                            ${msg.phone}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-slate-600">
+                            ${msg.message.substring(0, 50)}${msg.message.length > 50 ? '...' : ''}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm">
+                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                ${msg.status === 'sent' ? 'bg-green-100 text-green-800' : 
+                                  msg.status === 'failed' ? 'bg-red-100 text-red-800' : 
+                                  'bg-yellow-100 text-yellow-800'}">
+                                ${msg.status}
+                            </span>
+                        </td>
+                    </tr>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading WhatsApp history:', e);
+            }
+        }
+        
+        // Set up WhatsApp forms
+        function setupWhatsAppForms() {
+            // Individual message form
+            document.getElementById('individualMessageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const residentId = document.getElementById('whatsappResident').value;
+                const message = document.getElementById('whatsappMessage').value;
+                
+                try {
+                    const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                    const resident = residents.find(r => r.id === residentId);
+                    
+                    if (!resident) return;
+                    
+                    // Send WhatsApp
+                    sendWhatsAppNotification(resident.phone, message);
+                    
+                    // Log activity
+                    logActivity('WhatsApp Sent', 
+                        `Sent message to ${resident.fullName}`, 
+                        'Admin');
+                    
+                    // Clear form
+                    this.reset();
+                    
+                    // Reload history
+                    loadWhatsAppHistory();
+                    
+                    alert('Message sent successfully!');
+                    
+                } catch (e) {
+                    console.error('Error sending message:', e);
+                    alert('Error sending message');
+                }
+            });
+            
+            // Bulk message form
+            document.getElementById('bulkMessageForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const message = document.getElementById('bulkMessage').value;
+                const allResidents = document.getElementById('allResidents').checked;
+                const withBalance = document.getElementById('withBalance').checked;
+                const specificRoom = document.getElementById('specificRoom').checked;
+                
+                try {
+                    const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                    let recipients = [];
+                    
+                    if (allResidents) {
+                        recipients = residents;
+                    } else if (withBalance) {
+                        // Filter residents with outstanding balance
+                        recipients = residents.filter(resident => {
+                            const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                            const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                            const balance = parseFloat(resident.monthlyRent || 0) - totalPaid;
+                            return balance > 0;
+                        });
+                    }
+                    // Add more filters as needed
+                    
+                    let sentCount = 0;
+                    recipients.forEach(resident => {
+                        if (resident.whatsappOptIn !== false) {
+                            sendWhatsAppNotification(resident.phone, message);
+                            sentCount++;
+                        }
+                    });
+                    
+                    // Log activity
+                    logActivity('Bulk WhatsApp Sent', 
+                        `Sent bulk message to ${sentCount} residents`, 
+                        'Admin');
+                    
+                    // Clear form
+                    this.reset();
+                    
+                    // Reload history
+                    loadWhatsAppHistory();
+                    
+                    alert(`Message sent to ${sentCount} residents!`);
+                    
+                } catch (e) {
+                    console.error('Error sending bulk messages:', e);
+                    alert('Error sending messages');
+                }
+            });
+        }
+        
+        // Load bulk message template
+        function loadBulkTemplate(template) {
+            const messageField = document.getElementById('bulkMessage');
+            
+            const templates = {
+                rent_reminder: `Dear Resident,
+
+This is a reminder that your rent payment for this month is due. Please ensure payment is made by the 5th of the month to avoid any inconvenience.
+
+Thank you,
+Gina's Hostel Management`,
+                maintenance: `Important Announcement:
+
+There will be scheduled maintenance this weekend. Water supply will be interrupted from 8 AM to 2 PM on Saturday. Please make necessary arrangements.
+
+Thank you for your understanding.
+Gina's Hostel Management`,
+                security: `Security Update:
+
+Please be reminded that gates are locked at 8:00 PM sharp. No male visitors are allowed inside the compound. Female visitors must leave by 8:00 PM.
+
+Stay safe,
+Gina's Hostel Management`,
+                general: `General Announcement:
+
+Please check your email for important updates regarding hostel policies and upcoming events.
+
+Best regards,
+Gina's Hostel Management`
+            };
+            
+            if (templates[template]) {
+                messageField.value = templates[template];
+            }
+        }
+        
+        // Load reports section
+        function loadReports() {
+            const section = document.getElementById('sectionReports');
+            section.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">Generate Reports</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                        <!-- Financial Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="generateReport('financial')">
+                            <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-money-bill-wave text-blue-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Financial Report</h3>
+                            <p class="text-sm text-slate-600">Revenue, payments, and outstanding balances</p>
+                        </div>
+                        
+                        <!-- Occupancy Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="generateReport('occupancy')">
+                            <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-users text-emerald-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Occupancy Report</h3>
+                            <p class="text-sm text-slate-600">Room occupancy and capacity analysis</p>
+                        </div>
+                        
+                        <!-- Issues Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="generateReport('issues')">
+                            <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Issues Report</h3>
+                            <p class="text-sm text-slate-600">Reported issues and resolution status</p>
+                        </div>
+                        
+                        <!-- Resident Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="generateReport('residents')">
+                            <div class="w-12 h-12 rounded-full bg-purple-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-user text-purple-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Resident Report</h3>
+                            <p class="text-sm text-slate-600">Complete resident information</p>
+                        </div>
+                        
+                        <!-- Audit Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="generateReport('audit')">
+                            <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-history text-red-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Audit Report</h3>
+                            <p class="text-sm text-slate-600">System activity and changes log</p>
+                        </div>
+                        
+                        <!-- Custom Report -->
+                        <div class="border border-slate-200 rounded-lg p-6 hover:border-blue-500 transition cursor-pointer"
+                             onclick="showCustomReportModal()">
+                            <div class="w-12 h-12 rounded-full bg-slate-100 flex items-center justify-center mb-4">
+                                <i class="fas fa-cogs text-slate-600 text-xl"></i>
+                            </div>
+                            <h3 class="font-bold text-slate-700 mb-2">Custom Report</h3>
+                            <p class="text-sm text-slate-600">Generate custom report with filters</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Reports -->
+                    <div>
+                        <h3 class="font-bold text-slate-700 mb-4">Recently Generated Reports</h3>
+                        <div id="recentReports">
+                            <!-- Reports will be loaded here -->
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            loadRecentReports();
+        }
+        
+        // Generate report
+        function generateReport(type) {
+            switch(type) {
+                case 'financial':
+                    generateFinancialReport();
+                    break;
+                case 'occupancy':
+                    generateOccupancyReport();
+                    break;
+                case 'issues':
+                    generateIssuesReport();
+                    break;
+                case 'residents':
+                    generateResidentsReport();
+                    break;
+                case 'audit':
+                    generateAuditReport();
+                    break;
+            }
+        }
+        
+        // Generate financial report
+        function generateFinancialReport() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const allPayments = getAllPayments();
+                
+                // Calculate totals
+                let totalRevenue = 0;
+                let outstandingBalance = 0;
+                const monthlyRevenue = {};
+                
+                allPayments.forEach(payment => {
+                    totalRevenue += parseFloat(payment.amount);
+                    
+                    const month = new Date(payment.date).toLocaleString('default', { month: 'long', year: 'numeric' });
+                    if (!monthlyRevenue[month]) monthlyRevenue[month] = 0;
+                    monthlyRevenue[month] += parseFloat(payment.amount);
+                });
+                
+                // Calculate outstanding balances
+                residents.forEach(resident => {
+                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                    const balance = parseFloat(resident.monthlyRent || 0) - totalPaid;
+                    if (balance > 0) outstandingBalance += balance;
+                });
+                
+                // Create report content
+                let reportContent = `
+                    FINANCIAL REPORT - Gina's Hostel
+                    Generated: ${new Date().toLocaleString()}
+                    =====================================
+                    
+                    SUMMARY:
+                    Total Revenue: $${totalRevenue.toFixed(2)}
+                    Outstanding Balance: $${outstandingBalance.toFixed(2)}
+                    Active Residents: ${residents.length}
+                    
+                    MONTHLY REVENUE:
+                `;
+                
+                for (const [month, revenue] of Object.entries(monthlyRevenue)) {
+                    reportContent += `${month}: $${revenue.toFixed(2)}\n`;
+                }
+                
+                reportContent += `
+                    
+                    RESIDENT PAYMENT STATUS:
+                `;
+                
+                residents.forEach(resident => {
+                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                    const totalPaid = payments.reduce((sum, p) => sum + parseFloat(p.amount), 0);
+                    const balance = parseFloat(resident.monthlyRent || 0) - totalPaid;
+                    
+                    reportContent += `
+${resident.fullName} (Room: ${resident.roomAssigned || 'N/A'})
+  Monthly Rent: $${parseFloat(resident.monthlyRent || 0).toFixed(2)}
+  Total Paid: $${totalPaid.toFixed(2)}
+  Balance: $${balance.toFixed(2)}
+  Status: ${balance > 0 ? 'OUTSTANDING' : 'PAID'}
+                    `;
+                });
+                
+                // Save report
+                saveReport('Financial Report', reportContent);
+                downloadTextFile(reportContent, 'financial_report.txt');
+                
+                alert('Financial report generated and downloaded!');
+                
+            } catch (e) {
+                console.error('Error generating financial report:', e);
+                alert('Error generating report');
+            }
+        }
+        
+        // Generate occupancy report
+        function generateOccupancyReport() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                
+                // Group by room
+                const roomOccupancy = {
+                    'Ensuite': [],
+                    'Blue White': [],
+                    'Black Gold': [],
+                    'Crystal 1': [],
+                    'Crystal 2': []
+                };
+                
+                residents.forEach(resident => {
+                    const room = resident.roomAssigned;
+                    if (room && roomOccupancy[room]) {
+                        roomOccupancy[room].push(resident);
+                    }
+                });
+                
+                // Create report
+                let reportContent = `
+                    OCCUPANCY REPORT - Gina's Hostel
+                    Generated: ${new Date().toLocaleString()}
+                    =====================================
+                    
+                    CAPACITY STATUS:
+                    Total Capacity: 13 residents
+                    Current Occupancy: ${residents.length} residents
+                    Available Spaces: ${13 - residents.length} residents
+                    Occupancy Rate: ${Math.round((residents.length / 13) * 100)}%
+                    
+                    ROOM BREAKDOWN:
+                `;
+                
+                for (const [room, occupants] of Object.entries(roomOccupancy)) {
+                    reportContent += `
+${room}:
+  Capacity: ${room === 'Ensuite' ? 2 : room.includes('Crystal') ? 2 : 1} residents
+  Current: ${occupants.length} residents
+  Available: ${(room === 'Ensuite' ? 2 : room.includes('Crystal') ? 2 : 1) - occupants.length} residents
+  Occupants: ${occupants.map(o => o.fullName).join(', ') || 'None'}
+                    `;
+                }
+                
+                // Save and download
+                saveReport('Occupancy Report', reportContent);
+                downloadTextFile(reportContent, 'occupancy_report.txt');
+                
+                alert('Occupancy report generated and downloaded!');
+                
+            } catch (e) {
+                console.error('Error generating occupancy report:', e);
+                alert('Error generating report');
+            }
+        }
+        
+        // Save report to history
+        function saveReport(title, content) {
+            try {
+                const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+                reports.push({
+                    id: 'REP-' + Date.now(),
+                    title: title,
+                    content: content,
+                    generatedAt: new Date().toISOString(),
+                    generatedBy: 'Admin'
+                });
+                localStorage.setItem('generatedReports', JSON.stringify(reports));
+                
+                // Update recent reports display
+                loadRecentReports();
+                
+            } catch (e) {
+                console.error('Error saving report:', e);
+            }
+        }
+        
+        // Download text file
+        function downloadTextFile(content, filename) {
+            const blob = new Blob([content], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = filename;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+        
+        // Load recent reports
+        function loadRecentReports() {
+            try {
+                const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+                const container = document.getElementById('recentReports');
+                
+                if (reports.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-slate-600">No reports generated yet</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first) and take last 5
+                const recentReports = reports
+                    .sort((a, b) => new Date(b.generatedAt) - new Date(a.generatedAt))
+                    .slice(0, 5);
+                
+                container.innerHTML = recentReports.map(report => `
+                    <div class="border border-slate-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <h4 class="font-bold text-slate-800">${report.title}</h4>
+                                <p class="text-sm text-slate-600">
+                                    Generated: ${new Date(report.generatedAt).toLocaleString()}
+                                </p>
+                            </div>
+                            <button onclick="downloadReport('${report.id}')" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                console.error('Error loading reports:', e);
+            }
+        }
+        
+        // Download report
+        function downloadReport(reportId) {
+            try {
+                const reports = JSON.parse(localStorage.getItem('generatedReports') || '[]');
+                const report = reports.find(r => r.id === reportId);
+                
+                if (!report) return;
+                
+                downloadTextFile(report.content, `${report.title.toLowerCase().replace(/\s+/g, '_')}_${reportId}.txt`);
+                
+            } catch (e) {
+                console.error('Error downloading report:', e);
+            }
+        }
+        
+        // Load settings
+        function loadSettings() {
+            const section = document.getElementById('sectionSettings');
+            section.innerHTML = `
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-6">System Settings</h2>
+                    
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        <!-- General Settings -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">General Settings</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Hostel Name
+                                    </label>
+                                    <input type="text" id="hostelName" value="Gina's Hostel"
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Maximum Capacity
+                                    </label>
+                                    <input type="number" id="maxCapacity" value="13" disabled
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm bg-slate-100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Curfew Time
+                                    </label>
+                                    <input type="time" id="curfewTime" value="20:00"
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- WhatsApp Settings -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">WhatsApp Settings</h3>
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="flex items-center">
+                                        <input type="checkbox" id="enableWhatsApp" class="mr-2" checked>
+                                        <span class="text-sm text-slate-700">Enable WhatsApp Notifications</span>
+                                    </label>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        WhatsApp API Key
+                                    </label>
+                                    <input type="password" id="whatsappApiKey" placeholder="Enter API Key"
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Sender Number
+                                    </label>
+                                    <input type="text" id="senderNumber" value="+263771308790"
+                                           class="w-full border border-slate-300 rounded-lg px-4 py-2 text-sm">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Data Management -->
+                    <div class="mt-8 pt-6 border-t border-slate-200">
+                        <h3 class="font-bold text-slate-700 mb-4">Data Management</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button onclick="exportAllData()" 
+                                    class="px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                <i class="fas fa-download mr-2"></i>
+                                Export All Data
+                            </button>
+                            <button onclick="backupSystem()" 
+                                    class="px-4 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                                <i class="fas fa-save mr-2"></i>
+                                Create Backup
+                            </button>
+                            <button onclick="resetSystem()" 
+                                    class="px-4 py-3 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition">
+                                <i class="fas fa-redo mr-2"></i>
+                                Reset System
+                            </button>
+                            <button onclick="clearAllData()" 
+                                    class="px-4 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                <i class="fas fa-trash mr-2"></i>
+                                Clear All Data
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Save Settings Button -->
+                    <div class="mt-8">
+                        <button onclick="saveSettings()" 
+                                class="px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg hover:from-blue-700 hover:to-blue-800 transition">
+                            Save Settings
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        // Export all data
+        function exportAllData() {
+            try {
+                const allData = {
+                    residents: JSON.parse(localStorage.getItem('approvedResidents') || '[]'),
+                    pending: JSON.parse(localStorage.getItem('pendingResidents') || '[]'),
+                    issues: JSON.parse(localStorage.getItem('reportedIssues') || '[]'),
+                    payments: getAllPayments(),
+                    activity: JSON.parse(localStorage.getItem('adminActivityLog') || '[]'),
+                    whatsapp: JSON.parse(localStorage.getItem('whatsappLog') || '[]'),
+                    reports: JSON.parse(localStorage.getItem('generatedReports') || '[]'),
+                    exportDate: new Date().toISOString()
+                };
+                
+                const dataStr = JSON.stringify(allData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `ginas_hostel_data_${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                logActivity('Data Exported', 'Exported all system data', 'Admin');
+                alert('All data exported successfully!');
+                
+            } catch (e) {
+                console.error('Error exporting data:', e);
+                alert('Error exporting data');
+            }
+        }
+        
+        // Backup system
+        function backupSystem() {
+            try {
+                // Create backup of all localStorage data
+                const backup = {};
+                for (let i = 0; i < localStorage.length; i++) {
+                    const key = localStorage.key(i);
+                    backup[key] = localStorage.getItem(key);
+                }
+                
+                const backupData = {
+                    timestamp: new Date().toISOString(),
+                    data: backup
+                };
+                
+                const backupStr = JSON.stringify(backupData, null, 2);
+                const backupUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(backupStr);
+                
+                const backupFileName = `ginas_hostel_backup_${new Date().toISOString().split('T')[0]}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', backupUri);
+                linkElement.setAttribute('download', backupFileName);
+                linkElement.click();
+                
+                logActivity('System Backup', 'Created system backup', 'Admin');
+                alert('System backup created successfully!');
+                
+            } catch (e) {
+                console.error('Error creating backup:', e);
+                alert('Error creating backup');
+            }
+        }
+        
+        // Reset system
+        function resetSystem() {
+            if (!confirm('WARNING: This will reset all system settings. Are you sure?')) return;
+            
+            // Reset settings to defaults
+            const defaultSettings = {
+                hostelName: "Gina's Hostel",
+                maxCapacity: 13,
+                curfewTime: "20:00",
+                enableWhatsApp: true
+            };
+            
+            localStorage.setItem('systemSettings', JSON.stringify(defaultSettings));
+            alert('System settings reset to defaults!');
+            loadSettings();
+        }
+        
+        // Clear all data
+        function clearAllData() {
+            if (!confirm('WARNING: This will DELETE ALL DATA including residents, payments, and issues. This action cannot be undone. Are you sure?')) return;
+            
+            if (prompt('Type "DELETE ALL" to confirm:') === 'DELETE ALL') {
+                localStorage.clear();
+                alert('All data cleared. The system will now reload.');
+                window.location.reload();
+            }
+        }
+        
+        // Save settings
+        function saveSettings() {
+            const settings = {
+                hostelName: document.getElementById('hostelName').value,
+                maxCapacity: document.getElementById('maxCapacity').value,
+                curfewTime: document.getElementById('curfewTime').value,
+                enableWhatsApp: document.getElementById('enableWhatsApp').checked,
+                whatsappApiKey: document.getElementById('whatsappApiKey').value,
+                senderNumber: document.getElementById('senderNumber').value
+            };
+            
+            localStorage.setItem('systemSettings', JSON.stringify(settings));
+            logActivity('Settings Updated', 'Updated system settings', 'Admin');
+            alert('Settings saved successfully!');
+        }
+        
+        // Show modal
+        function showModal(modalId) {
+            document.getElementById(modalId).classList.remove('hidden');
+        }
+        
+        // Hide modal
+        function hideModal(modalId) {
+            document.getElementById(modalId).classList.add('hidden');
+        }
+        
+        // Toggle notifications
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+            
+            if (!dropdown.classList.contains('hidden')) {
+                loadNotifications();
+            }
+        }
+        
+        // Load notifications
+        function loadNotifications() {
+            try {
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const openIssues = issues.filter(i => i.status === 'open');
+                
+                const dropdown = document.getElementById('notificationDropdown');
+                
+                let notificationsHtml = `
+                    <div class="p-4 border-b border-slate-200">
+                        <h4 class="font-bold text-slate-800">Notifications</h4>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                `;
+                
+                if (pendingResidents.length === 0 && openIssues.length === 0) {
+                    notificationsHtml += `
+                        <div class="p-4 text-center text-slate-500">
+                            No new notifications
+                        </div>
+                    `;
+                } else {
+                    // Add pending approvals
+                    pendingResidents.slice(0, 3).forEach(resident => {
+                        notificationsHtml += `
+                            <div class="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                                 onclick="showSection('approvals')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center">
+                                        <i class="fas fa-user-plus text-amber-600 text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-slate-800">
+                                            New check-in request
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            ${resident.fullName}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                    
+                    // Add open issues
+                    openIssues.slice(0, 3).forEach(issue => {
+                        notificationsHtml += `
+                            <div class="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                                 onclick="showSection('issues')">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-slate-800">
+                                            Issue reported
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            ${issue.title}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                notificationsHtml += `
+                    </div>
+                    <div class="p-4 border-t border-slate-200">
+                        <a href="#all" onclick="showSection('approvals')" 
+                           class="text-sm text-blue-600 hover:text-blue-700">
+                            View all notifications
+                        </a>
+                    </div>
+                `;
+                
+                dropdown.innerHTML = notificationsHtml;
+                
+            } catch (e) {
+                console.error('Error loading notifications:', e);
+            }
+        }
+        
+        // Log activity
+        function logActivity(action, details, user) {
+            try {
+                const activityLog = JSON.parse(localStorage.getItem('adminActivityLog') || '[]');
+                activityLog.push({
+                    timestamp: new Date().toISOString(),
+                    action: action,
+                    details: details,
+                    user: user
+                });
+                localStorage.setItem('adminActivityLog', JSON.stringify(activityLog));
+            } catch (e) {
+                console.error('Error logging activity:', e);
+            }
+        }
+        
+        // Update time and date
+        function updateDateTime() {
+            const now = new Date();
+            document.getElementById('currentTime').textContent = now.toLocaleTimeString();
+            document.getElementById('currentDate').textContent = now.toLocaleDateString();
+        }
+        
+        // Check capacity
+        function checkCapacity() {
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const availableSpots = 13 - residents.length;
+            
+            if (availableSpots <= 0) {
+                alert('Hostel is at full capacity (13 residents). No new check-ins can be accepted.');
+            } else {
+                alert(`${availableSpots} spots available. Capacity: ${residents.length}/13 residents.`);
+            }
+        }
+        
+        // Initialize admin portal
+        document.addEventListener('DOMContentLoaded', function() {
+            // Check authentication
+            if (!checkAdminAuth()) return;
+            
+            // Update time every second
+            setInterval(updateDateTime, 1000);
+            updateDateTime();
+            
+            // Load dashboard by default
+            loadDashboard();
+            
+            // Set up periodic refresh
+            setInterval(() => {
+                updateStats();
+                if (currentSection === 'dashboard') loadRecentActivity();
+                if (currentSection === 'approvals') loadApprovals();
+                if (currentSection === 'residents') loadResidents();
+                if (currentSection === 'payments') loadPayments();
+                if (currentSection === 'issues') {
+                    updateIssuesCount();
+                    loadRecentIssues();
+                }
+            }, 30000); // Refresh every 30 seconds
+            
+            // Log initial activity
+            logActivity('Admin Login', 'Admin logged into system', 'Admin');
+            
+            // Close dropdowns when clicking outside
+            document.addEventListener('click', function(event) {
+                const notificationContainer = document.getElementById('notificationContainer');
+                if (notificationContainer && !notificationContainer.contains(event.target)) {
+                    document.getElementById('notificationDropdown').classList.add('hidden');
+                }
+            });
+        });
+    </script>
 </body>
 </html>
