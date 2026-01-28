@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gina's Hostel - Welcome</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 100%); }
+        .bg-gradient-emergency { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-slate-100 to-blue-50">
+    <!-- Emergency Contact Banner -->
+    <div class="bg-gradient-emergency text-white py-3 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <i class="fas fa-phone-alt text-xl"></i>
+                    <span class="font-bold">EMERGENCY CONTACTS:</span>
+                </div>
+                <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
+                    <span class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+                        <i class="fas fa-user"></i>
+                        Caretaker Garry: 
+                        <a href="tel:+263711391414" class="font-bold">+263 71 139 1414</a>
+                    </span>
+                    <span class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
+                        <i class="fab fa-whatsapp"></i>
+                        WhatsApp: 
+                        <a href="https://wa.me/263771308790" target="_blank" class="font-bold">+263 77 130 8790</a>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Security Alert Banner -->
+    <div class="bg-amber-50 border-b border-amber-200 py-2 px-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2 text-sm">
+            <i class="fas fa-shield-alt text-amber-600"></i>
+            <span class="font-medium text-amber-800">Security Status: Active</span>
+            <span class="text-amber-600">• Gates Lock at 8:00 PM • No Male Visitors • Female Visitors Leave by 8:00 PM</span>
+        </div>
+    </div>
+
+    <div class="min-h-screen flex flex-col">
+        <!-- Main Content -->
+        <main class="flex-1 flex items-center justify-center p-4">
+            <div class="max-w-6xl w-full grid lg:grid-cols-2 gap-8 items-center">
+                <!-- Left Side - Welcome & Emergency Info -->
+                <div class="text-center lg:text-left animate-fadeIn">
+                    <div class="flex items-center justify-center lg:justify-start gap-4 mb-6">
+                        <div class="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg">
+                            <i class="fas fa-home text-white text-3xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl lg:text-5xl font-bold text-slate-900">Gina's Hostel</h1>
+                            <p class="text-lg text-slate-600 mt-2">Safe & Secure Student Accommodation</p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Welcome Card -->
+                        <div class="bg-white rounded-2xl p-6 shadow-lg">
+                            <h2 class="text-2xl font-bold text-slate-800 mb-4">Welcome to Our Portal</h2>
+                            <p class="text-slate-600 mb-4">
+                                Please select your role to proceed. 
+                                <span class="font-semibold">New residents must apply for check-in</span> and wait for admin approval.
+                                Approved residents can log in to access their personal dashboard.
+                            </p>
+                            
+                            <!-- Process Flow -->
+                            <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                                <h4 class="font-bold text-blue-800 mb-3">Check-In Process:</h4>
+                                <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">1</div>
+                                        <span>Submit Check-In Request</span>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-blue-400 hidden md:block"></i>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">2</div>
+                                        <span>Wait for Admin Approval</span>
+                                    </div>
+                                    <i class="fas fa-arrow-right text-blue-400 hidden md:block"></i>
+                                    <div class="flex items-center gap-2">
+                                        <div class="w-8 h-8 rounded-full bg-blue-100 text-blue-700 flex items-center justify-center font-bold">3</div>
+                                        <span>Access Personal Dashboard</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Emergency Info Card -->
+                        <div class="bg-gradient-to-r from-red-50 to-red-100 border-2 border-red-200 rounded-2xl p-6 shadow-lg">
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0">
+                                    <div class="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600 text-xl"></i>
+                                    </div>
+                                </div>
+                                <div class="flex-1">
+                                    <h3 class="text-xl font-bold text-red-800 mb-2">Emergency Contacts</h3>
+                                    <div class="space-y-3">
+                                        <div class="flex items-center gap-3">
+                                            <i class="fas fa-user text-red-600"></i>
+                                            <div>
+                                                <div class="font-medium text-red-700">Caretaker Garry</div>
+                                                <div class="text-red-600">Available 24/7 for emergencies</div>
+                                            </div>
+                                        </div>
+                                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                            <a href="tel:+263711391414" 
+                                               class="flex items-center gap-2 bg-white px-4 py-3 rounded-lg border border-red-300 hover:bg-red-50 transition group">
+                                                <i class="fas fa-phone text-red-600 group-hover:scale-110 transition"></i>
+                                                <div>
+                                                    <div class="font-bold text-red-700">Call</div>
+                                                    <div class="text-sm">+263 71 139 1414</div>
+                                                </div>
+                                            </a>
+                                            <a href="https://wa.me/263771308790" target="_blank"
+                                               class="flex items-center gap-2 bg-white px-4 py-3 rounded-lg border border-red-300 hover:bg-red-50 transition group">
+                                                <i class="fab fa-whatsapp text-green-600 group-hover:scale-110 transition"></i>
+                                                <div>
+                                                    <div class="font-bold text-red-700">WhatsApp</div>
+                                                    <div class="text-sm">+263 77 130 8790</div>
+                                                </div>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Side - Portal Selection -->
+                <div class="animate-fadeIn" style="animation-delay: 0.2s">
+                    <div class="bg-white rounded-2xl shadow-xl p-8">
+                        <h2 class="text-2xl font-bold text-center text-slate-800 mb-8">
+                            Select Your Access Portal
+                        </h2>
+                        
+                        <!-- Role Cards -->
+                        <div class="space-y-6">
+                            <!-- Resident Portal Card -->
+                            <div class="border-2 border-blue-200 rounded-xl p-6 hover:border-blue-500 hover:shadow-lg transition-all duration-300">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center">
+                                        <i class="fas fa-user text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <div class="text-left flex-1">
+                                        <h3 class="text-xl font-bold text-slate-800">Resident Portal</h3>
+                                        <p class="text-slate-600 mt-1">For hostel residents</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-4">
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <a href="resident-login.html" 
+                                           class="block bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white text-center font-semibold py-3 px-4 rounded-lg transition">
+                                            <i class="fas fa-sign-in-alt mr-2"></i>
+                                            Resident Login
+                                        </a>
+                                        <a href="#new-resident" onclick="showNewResidentModal()"
+                                           class="block bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white text-center font-semibold py-3 px-4 rounded-lg transition">
+                                            <i class="fas fa-user-plus mr-2"></i>
+                                            New Resident
+                                        </a>
+                                    </div>
+                                    
+                                    <div class="text-sm text-slate-600">
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i class="fas fa-check-circle text-emerald-500"></i>
+                                            <span>Access your personal dashboard</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i class="fas fa-check-circle text-emerald-500"></i>
+                                            <span>View and accept house rules</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <i class="fas fa-check-circle text-emerald-500"></i>
+                                            <span>Submit check-out requests</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-check-circle text-emerald-500"></i>
+                                            <span>Report issues & incidents</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Admin Portal Card -->
+                            <a href="admin-portal.html" 
+                               class="block group transition-all duration-300 hover:scale-[1.02]">
+                                <div class="border-2 border-slate-200 rounded-xl p-6 hover:border-slate-800 hover:shadow-lg transition-all duration-300">
+                                    <div class="flex items-center gap-4">
+                                        <div class="w-16 h-16 rounded-full bg-slate-100 flex items-center justify-center group-hover:bg-slate-200 transition">
+                                            <i class="fas fa-user-shield text-slate-700 text-2xl"></i>
+                                        </div>
+                                        <div class="text-left flex-1">
+                                            <h3 class="text-xl font-bold text-slate-800">Admin Portal</h3>
+                                            <p class="text-slate-600 mt-1">For hostel management</p>
+                                        </div>
+                                        <i class="fas fa-arrow-right text-slate-700 text-xl group-hover:translate-x-2 transition"></i>
+                                    </div>
+                                    <div class="mt-4 text-sm text-slate-600">
+                                        <div class="flex items-center gap-2">
+                                            <i class="fas fa-lock text-amber-500"></i>
+                                            <span>Secure login required</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <i class="fas fa-check-circle text-blue-500"></i>
+                                            <span>Approve resident check-ins</span>
+                                        </div>
+                                        <div class="flex items-center gap-2 mt-2">
+                                            <i class="fas fa-database text-blue-500"></i>
+                                            <span>View all resident data</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+
+                        <!-- Current Status -->
+                        <div class="mt-8 p-4 bg-slate-50 rounded-lg border border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-3 h-3 rounded-full bg-emerald-500 animate-pulse"></div>
+                                    <div>
+                                        <div class="font-semibold text-slate-800">System Status</div>
+                                        <div class="text-sm text-slate-600">All portals are operational</div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div id="currentTime" class="font-bold text-slate-800">00:00:00</div>
+                                    <div class="text-xs text-slate-500">Curfew: 8:00 PM - 6:00 AM</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <footer class="py-6 border-t border-slate-200 bg-white">
+            <div class="max-w-6xl mx-auto px-4">
+                <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                    <div class="text-center md:text-left">
+                        <h3 class="font-bold text-slate-800">Gina's Hostel Portal System</h3>
+                        <p class="text-sm text-slate-600">Version 4.0 • Secure Access with Admin Approval</p>
+                    </div>
+                    
+                    <div class="flex items-center gap-6">
+                        <div class="text-center">
+                            <div class="text-xs text-slate-500">Residents</div>
+                            <div class="text-sm font-medium text-blue-700" id="residentCount">0 Active</div>
+                        </div>
+                        
+                        <div class="text-center">
+                            <div class="text-xs text-slate-500">Pending Approval</div>
+                            <div class="text-sm font-medium text-amber-700" id="pendingCount">0 Waiting</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="mt-4 pt-4 border-t border-slate-100 text-center">
+                    <p class="text-xs text-slate-500">
+                        <i class="fas fa-shield-alt mr-1"></i>
+                        Emergency: Call Caretaker Garry +263 71 139 1414 • WhatsApp +263 77 130 8790
+                        © <span id="currentYear"></span> Gina's Hostel Management
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- New Resident Modal -->
+    <div id="newResidentModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">New Resident Registration</h3>
+                    <button onclick="hideNewResidentModal()" class="text-white hover:text-blue-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-sm opacity-90 mt-1">Complete your check-in request for admin approval</p>
+            </div>
+            
+            <div class="p-6">
+                <form id="newResidentForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Full Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="fullName" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Phone Number <span class="text-red-500">*</span>
+                            </label>
+                            <input type="tel" name="phone" required 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Email Address
+                            </label>
+                            <input type="email" name="email" 
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Institution/School <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="institution" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Preferred Room Type
+                        </label>
+                        <select name="preferredRoom" 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition bg-white">
+                            <option value="">Any available</option>
+                            <option value="Ensuite">Ensuite</option>
+                            <option value="Blue White">Blue White</option>
+                            <option value="Black Gold">Black Gold</option>
+                            <option value="Crystal 1">Crystal 1</option>
+                            <option value="Crystal 2">Crystal 2</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Emergency Contact Name <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" name="emergencyName" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Emergency Contact Phone <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" name="emergencyPhone" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Create Password <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" name="password" required minlength="6"
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                Confirm Password <span class="text-red-500">*</span>
+                            </label>
+                            <input type="password" name="confirmPassword" required
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                        </div>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Check-In Request
+                        </button>
+                        <p class="text-xs text-slate-500 text-center mt-3">
+                            Your request will be reviewed by admin. You'll receive login credentials after approval.
+                        </p>
+                    </div>
+                </form>
+                
+                <div id="registrationMessage" class="mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700 hidden">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    <span>Check-in request submitted successfully! Awaiting admin approval.</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Update current time
+        function updateCurrentTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', {
+                hour12: true,
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = time;
+            
+            // Check if it's curfew time (8 PM to 6 AM)
+            const hour = now.getHours();
+            const isCurfew = hour >= 20 || hour < 6;
+            
+            if (isCurfew) {
+                const timeElement = document.getElementById('currentTime');
+                timeElement.parentElement.classList.add('text-red-600');
+                timeElement.parentElement.classList.remove('text-slate-500');
+            }
+        }
+        
+        // Load statistics
+        function loadStatistics() {
+            try {
+                // Load residents
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const pending = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                
+                document.getElementById('residentCount').textContent = residents.length + ' Active';
+                document.getElementById('pendingCount').textContent = pending.length + ' Waiting';
+            } catch (e) {
+                console.error('Error loading statistics:', e);
+            }
+        }
+        
+        // New Resident Modal
+        function showNewResidentModal() {
+            document.getElementById('newResidentModal').classList.remove('hidden');
+        }
+        
+        function hideNewResidentModal() {
+            document.getElementById('newResidentModal').classList.add('hidden');
+            document.getElementById('newResidentForm').reset();
+            document.getElementById('registrationMessage').classList.add('hidden');
+        }
+        
+        // Handle new resident registration
+        document.getElementById('newResidentForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const formData = new FormData(this);
+            
+            // Validate passwords match
+            const password = formData.get('password');
+            const confirmPassword = formData.get('confirmPassword');
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+            
+            // Create resident object
+            const resident = {
+                id: 'RES-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                fullName: formData.get('fullName'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                institution: formData.get('institution'),
+                preferredRoom: formData.get('preferredRoom'),
+                emergencyName: formData.get('emergencyName'),
+                emergencyPhone: formData.get('emergencyPhone'),
+                password: password, // In production, hash this password
+                status: 'pending',
+                requestedAt: new Date().toISOString(),
+                approvedAt: null,
+                roomAssigned: null,
+                checkinDate: null
+            };
+            
+            // Save to pending residents
+            try {
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                pendingResidents.push(resident);
+                localStorage.setItem('pendingResidents', JSON.stringify(pendingResidents));
+                
+                // Show success message
+                document.getElementById('registrationMessage').classList.remove('hidden');
+                
+                // Reset form
+                setTimeout(() => {
+                    hideNewResidentModal();
+                    loadStatistics(); // Update stats
+                }, 2000);
+                
+            } catch (e) {
+                alert('Error saving your request. Please try again.');
+                console.error('Error saving resident:', e);
+            }
+        });
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current year
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            
+            // Update time every second
+            setInterval(updateCurrentTime, 1000);
+            updateCurrentTime();
+            
+            // Load statistics
+            loadStatistics();
+            
+            // Check for browser support
+            if (typeof(Storage) === "undefined") {
+                alert("Warning: Your browser doesn't support local storage. Data cannot be saved.");
+            }
+        });
+    </script>
+</body>
+</html>
