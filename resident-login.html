@@ -1,0 +1,558 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gina's Hostel - Resident Login</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .login-shake { animation: shake 0.5s; }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+    </style>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-slate-50">
+    <!-- Back Button & Header -->
+    <header class="bg-gradient-to-r from-blue-800 to-blue-900 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-4">
+                    <a href="index.html" class="flex items-center gap-2 text-white hover:text-blue-200 transition">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Back to Main</span>
+                    </a>
+                    <div class="h-6 w-px bg-white/30"></div>
+                    <div>
+                        <h1 class="text-xl md:text-2xl font-bold">Resident Login</h1>
+                        <p class="text-sm opacity-90">Access your personal dashboard</p>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center gap-4">
+                    <a href="#emergency" onclick="showEmergencyInfo()" 
+                       class="flex items-center gap-2 px-3 py-1 bg-red-600 hover:bg-red-700 rounded-full text-sm transition">
+                        <i class="fas fa-phone-alt"></i>
+                        Emergency
+                    </a>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Emergency Contact Banner -->
+    <div id="emergencyBanner" class="bg-gradient-to-r from-red-600 to-red-700 text-white py-3 hidden animate-slideIn">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-exclamation-triangle text-xl"></i>
+                    <div>
+                        <strong>EMERGENCY CONTACTS:</strong>
+                        Caretaker Garry: 
+                        <a href="tel:+263711391414" class="font-bold underline">+263 71 139 1414</a>
+                        • WhatsApp: 
+                        <a href="https://wa.me/263771308790" target="_blank" class="font-bold underline">+263 77 130 8790</a>
+                    </div>
+                </div>
+                <button onclick="hideEmergencyInfo()" class="text-white/80 hover:text-white">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <main class="max-w-7xl mx-auto px-4 py-8">
+        <div class="grid lg:grid-cols-2 gap-8 items-center">
+            <!-- Left Side - Login Form -->
+            <div class="animate-fadeIn">
+                <div class="bg-white rounded-2xl shadow-xl p-8">
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-r from-blue-500 to-blue-600 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user-lock text-white text-2xl"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold text-slate-800">Resident Login</h2>
+                        <p class="text-slate-600 mt-2">Enter your credentials to access your dashboard</p>
+                    </div>
+                    
+                    <form id="loginForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Resident ID or Phone Number <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="loginIdentifier" required
+                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition"
+                                   placeholder="Enter your Resident ID or phone number">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-slate-700 mb-2">
+                                Password <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative">
+                                <input type="password" id="loginPassword" required
+                                       class="w-full border border-slate-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition pr-10">
+                                <button type="button" onclick="togglePasswordVisibility()" 
+                                        class="absolute right-3 top-3 text-slate-400 hover:text-slate-600">
+                                    <i id="passwordToggle" class="fas fa-eye"></i>
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <input type="checkbox" id="rememberMe" class="h-4 w-4 text-blue-600">
+                                <label for="rememberMe" class="text-sm text-slate-700">Remember me</label>
+                            </div>
+                            <a href="#forgot" onclick="showForgotPassword()" class="text-sm text-blue-600 hover:text-blue-700">
+                                Forgot Password?
+                            </a>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-bold py-3 px-6 rounded-lg transition duration-300">
+                            <i class="fas fa-sign-in-alt mr-2"></i>
+                            Login to Dashboard
+                        </button>
+                        
+                        <!-- Login Status Messages -->
+                        <div id="loginError" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="flex items-center gap-2 text-red-700">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <span id="errorMessage">Invalid credentials. Please try again.</span>
+                            </div>
+                        </div>
+                        
+                        <div id="pendingApproval" class="hidden p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div class="flex items-center gap-2 text-amber-700">
+                                <i class="fas fa-clock"></i>
+                                <span>Your account is pending admin approval. Please wait for confirmation.</span>
+                            </div>
+                        </div>
+                        
+                        <div id="accountDisabled" class="hidden p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <div class="flex items-center gap-2 text-red-700">
+                                <i class="fas fa-ban"></i>
+                                <span>Your account has been disabled. Contact administration.</span>
+                            </div>
+                        </div>
+                        
+                        <!-- New Resident Link -->
+                        <div class="text-center pt-4 border-t border-slate-100">
+                            <p class="text-sm text-slate-600">
+                                New to Gina's Hostel?
+                                <a href="index.html#new-resident" class="text-blue-600 hover:text-blue-700 font-medium">
+                                    Apply for check-in here
+                                </a>
+                            </p>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <!-- Right Side - Information -->
+            <div class="animate-fadeIn" style="animation-delay: 0.2s">
+                <div class="space-y-6">
+                    <!-- Status Card -->
+                    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-xl font-bold mb-4">Account Status Information</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <i class="fas fa-user-check"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold">Active Account</div>
+                                    <div class="text-sm opacity-90">Access all features immediately</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold">Pending Approval</div>
+                                    <div class="text-sm opacity-90">Waiting for admin approval</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center gap-3">
+                                <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center">
+                                    <i class="fas fa-exclamation-circle"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold">Disabled Account</div>
+                                    <div class="text-sm opacity-90">Contact administration</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Features Card -->
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">Dashboard Features</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-file-contract text-emerald-600"></i>
+                                <span class="text-slate-700">View & Accept House Rules</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-sign-out-alt text-amber-600"></i>
+                                <span class="text-slate-700">Submit Check-Out Requests</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                                <span class="text-slate-700">Report Issues & Incidents</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-calendar-check text-blue-600"></i>
+                                <span class="text-slate-700">View Your Stay Details</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-history text-purple-600"></i>
+                                <span class="text-slate-700">View Your Activity History</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Emergency Card -->
+                    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl p-6 shadow-lg">
+                        <h3 class="text-xl font-bold mb-4">Emergency Contacts</h3>
+                        <div class="space-y-4">
+                            <div class="flex items-center gap-3">
+                                <div class="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                                    <i class="fas fa-user text-xl"></i>
+                                </div>
+                                <div>
+                                    <div class="font-bold">Caretaker Garry</div>
+                                    <div class="text-sm opacity-90">Available 24/7 for emergencies</div>
+                                </div>
+                            </div>
+                            
+                            <div class="grid grid-cols-2 gap-3">
+                                <a href="tel:+263711391414" 
+                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition">
+                                    <i class="fas fa-phone"></i>
+                                    <span>Call Now</span>
+                                </a>
+                                <a href="https://wa.me/263771308790" target="_blank"
+                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition">
+                                    <i class="fab fa-whatsapp"></i>
+                                    <span>WhatsApp</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Forgot Password Modal -->
+    <div id="forgotPasswordModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Reset Password</h3>
+                    <button onclick="hideForgotPassword()" class="text-white hover:text-blue-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="resetPasswordForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Resident ID or Phone Number <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="resetIdentifier" required
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Emergency Contact Phone <span class="text-red-500">*</span>
+                        </label>
+                        <input type="tel" id="resetEmergencyPhone" required
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            New Password <span class="text-red-500">*</span>
+                        </label>
+                        <input type="password" id="newPassword" required minlength="6"
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition">
+                    </div>
+                    
+                    <div class="pt-2">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-key mr-2"></i>
+                            Reset Password
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="resetMessage" class="mt-4 p-3 rounded-lg hidden">
+                    <i class="fas mr-2"></i>
+                    <span></span>
+                </div>
+                
+                <div class="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                    <div class="flex items-start gap-2">
+                        <i class="fas fa-info-circle text-amber-600 mt-0.5"></i>
+                        <div class="text-sm text-amber-700">
+                            <strong>Note:</strong> You must provide your registered emergency contact number for verification.
+                            Contact administration if you need assistance.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="mt-8 py-6 border-t border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+                <div class="text-center md:text-left">
+                    <h3 class="font-bold text-slate-800">Gina's Hostel - Resident Portal</h3>
+                    <p class="text-sm text-slate-600">Secure login system with admin approval</p>
+                </div>
+                
+                <div class="text-center">
+                    <div class="text-xs text-slate-500">Need Help?</div>
+                    <a href="tel:+263711391414" class="text-sm font-medium text-red-700">
+                        <i class="fas fa-phone-alt mr-1"></i>
+                        Emergency: +263 71 139 1414
+                    </a>
+                </div>
+            </div>
+            
+            <div class="mt-4 pt-4 border-t border-slate-100 text-center">
+                <p class="text-xs text-slate-500">
+                    <i class="fas fa-shield-alt mr-1"></i>
+                    Remember: Check-in requires admin approval • No male visitors • Female visitors leave by 8:00 PM
+                    © <span id="currentYear"></span> Gina's Hostel Management
+                </p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Toggle password visibility
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('loginPassword');
+            const toggleIcon = document.getElementById('passwordToggle');
+            
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.className = 'fas fa-eye-slash';
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.className = 'fas fa-eye';
+            }
+        }
+        
+        // Show/hide emergency info
+        function showEmergencyInfo() {
+            document.getElementById('emergencyBanner').classList.remove('hidden');
+        }
+        
+        function hideEmergencyInfo() {
+            document.getElementById('emergencyBanner').classList.add('hidden');
+        }
+        
+        // Forgot password modal
+        function showForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.remove('hidden');
+        }
+        
+        function hideForgotPassword() {
+            document.getElementById('forgotPasswordModal').classList.add('hidden');
+            document.getElementById('resetPasswordForm').reset();
+            const resetMessage = document.getElementById('resetMessage');
+            resetMessage.classList.add('hidden');
+        }
+        
+        // Handle login
+        document.getElementById('loginForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const identifier = document.getElementById('loginIdentifier').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            
+            // Hide all messages
+            document.getElementById('loginError').classList.add('hidden');
+            document.getElementById('pendingApproval').classList.add('hidden');
+            document.getElementById('accountDisabled').classList.add('hidden');
+            
+            // Add shake animation for error
+            this.classList.remove('login-shake');
+            
+            // Load approved residents
+            try {
+                const approvedResidents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                
+                // Search for resident by ID or phone
+                let resident = approvedResidents.find(r => 
+                    r.id === identifier || r.phone === identifier
+                );
+                
+                if (resident) {
+                    // Check if account is active
+                    if (resident.status === 'disabled') {
+                        document.getElementById('accountDisabled').classList.remove('hidden');
+                        this.classList.add('login-shake');
+                        return;
+                    }
+                    
+                    // Check password (in production, compare hashed passwords)
+                    if (resident.password === password) {
+                        // Successful login
+                        // Save session
+                        localStorage.setItem('currentResident', JSON.stringify({
+                            id: resident.id,
+                            name: resident.fullName,
+                            room: resident.roomAssigned,
+                            loginTime: new Date().toISOString()
+                        }));
+                        
+                        // Redirect to dashboard
+                        window.location.href = 'resident-dashboard.html';
+                        return;
+                    } else {
+                        // Wrong password
+                        document.getElementById('loginError').classList.remove('hidden');
+                        this.classList.add('login-shake');
+                    }
+                } else {
+                    // Check if pending approval
+                    const pendingResident = pendingResidents.find(r => 
+                        r.phone === identifier || (r.email && r.email === identifier)
+                    );
+                    
+                    if (pendingResident) {
+                        document.getElementById('pendingApproval').classList.remove('hidden');
+                        this.classList.add('login-shake');
+                    } else {
+                        document.getElementById('loginError').classList.remove('hidden');
+                        this.classList.add('login-shake');
+                    }
+                }
+            } catch (e) {
+                console.error('Login error:', e);
+                document.getElementById('loginError').classList.remove('hidden');
+                document.getElementById('errorMessage').textContent = 'System error. Please try again.';
+                this.classList.add('login-shake');
+            }
+        });
+        
+        // Handle password reset
+        document.getElementById('resetPasswordForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const identifier = document.getElementById('resetIdentifier').value.trim();
+            const emergencyPhone = document.getElementById('resetEmergencyPhone').value.trim();
+            const newPassword = document.getElementById('newPassword').value;
+            
+            const resetMessage = document.getElementById('resetMessage');
+            
+            try {
+                const approvedResidents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const pendingResidents = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
+                
+                // Search in approved residents
+                let resident = approvedResidents.find(r => 
+                    (r.id === identifier || r.phone === identifier) && 
+                    r.emergencyPhone === emergencyPhone
+                );
+                
+                if (!resident) {
+                    // Search in pending residents
+                    resident = pendingResidents.find(r => 
+                        (r.phone === identifier || (r.email && r.email === identifier)) && 
+                        r.emergencyPhone === emergencyPhone
+                    );
+                }
+                
+                if (resident) {
+                    // Update password
+                    if (resident.status === 'approved') {
+                        const index = approvedResidents.findIndex(r => r.id === resident.id);
+                        if (index !== -1) {
+                            approvedResidents[index].password = newPassword;
+                            localStorage.setItem('approvedResidents', JSON.stringify(approvedResidents));
+                        }
+                    } else {
+                        const index = pendingResidents.findIndex(r => r.id === resident.id);
+                        if (index !== -1) {
+                            pendingResidents[index].password = newPassword;
+                            localStorage.setItem('pendingResidents', JSON.stringify(pendingResidents));
+                        }
+                    }
+                    
+                    // Show success message
+                    resetMessage.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700';
+                    resetMessage.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Password reset successful! You can now login with your new password.</span>';
+                    resetMessage.classList.remove('hidden');
+                    
+                    // Reset form
+                    setTimeout(() => {
+                        hideForgotPassword();
+                    }, 3000);
+                } else {
+                    resetMessage.className = 'mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700';
+                    resetMessage.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span>Verification failed. Check your details and try again.</span>';
+                    resetMessage.classList.remove('hidden');
+                }
+            } catch (e) {
+                console.error('Password reset error:', e);
+                resetMessage.className = 'mt-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700';
+                resetMessage.innerHTML = '<i class="fas fa-exclamation-circle mr-2"></i><span>System error. Please try again.</span>';
+                resetMessage.classList.remove('hidden');
+            }
+        });
+        
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            // Set current year
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+            
+            // Check if already logged in
+            try {
+                const currentResident = JSON.parse(localStorage.getItem('currentResident'));
+                if (currentResident) {
+                    // Auto-redirect to dashboard if already logged in
+                    window.location.href = 'resident-dashboard.html';
+                }
+            } catch (e) {
+                // Ignore error
+            }
+            
+            // Auto-show emergency banner for first-time visitors
+            if (!localStorage.getItem('emergencyShown')) {
+                setTimeout(() => {
+                    showEmergencyInfo();
+                    localStorage.setItem('emergencyShown', 'true');
+                }, 2000);
+            }
+        });
+    </script>
+</body>
+</html>
