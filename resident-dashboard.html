@@ -160,7 +160,7 @@
             <!-- Mobile Sidebar Overlay -->
             <div id="mobileSidebar" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden">
                 <div class="absolute left-0 top-0 h-full w-64 bg-white shadow-xl animate-slideIn">
-                    <!-- Sidebar content will be copied here for mobile -->
+                    <!-- Mobile sidebar content will be populated by JavaScript -->
                 </div>
             </div>
 
@@ -195,6 +195,13 @@
                                 id="btnProfile">
                             <i class="fas fa-user-circle mr-3"></i>
                             My Profile
+                        </button>
+
+                        <button onclick="showSection('payments')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnPayments">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            My Payments
                         </button>
                         
                         <button onclick="showSection('issues')" 
@@ -233,6 +240,11 @@
                                     class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
                                 <i class="fas fa-headset mr-2"></i>
                                 Contact Admin
+                            </button>
+                            <button onclick="viewPaymentHistory()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-history mr-2"></i>
+                                Payment History
                             </button>
                             <button onclick="viewStayDetails()" 
                                     class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
@@ -283,12 +295,16 @@
                                     <div class="text-3xl font-bold" id="residentRoomNumber">Room 0</div>
                                     <div class="text-sm opacity-90">Your Room</div>
                                 </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold" id="monthlyRentAmount">$0</div>
+                                    <div class="text-sm opacity-90">Monthly Rent</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                     
                     <!-- Quick Stats -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
                         <!-- Issues Status -->
                         <div class="bg-white rounded-xl p-6 shadow-lg">
                             <div class="flex items-center justify-between mb-4">
@@ -330,13 +346,72 @@
                             </div>
                             <div class="text-sm text-slate-600" id="roomDetails">All services active</div>
                         </div>
+
+                        <!-- Payment Status -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Payment Status</div>
+                                    <div class="text-3xl font-bold text-emerald-600" id="paymentStatus">Paid</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="paymentDetails">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Summary Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-slate-800">Current Payment Status</h3>
+                            <button onclick="showSection('payments')" class="text-sm text-purple-600 hover:text-purple-700">
+                                View Details →
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-emerald-50 p-6 rounded-lg">
+                                <div class="text-sm text-emerald-700">Current Month Paid</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="currentMonthPaid">$0</div>
+                                <div class="text-xs text-emerald-600 mt-2" id="currentMonth">Loading...</div>
+                            </div>
+                            
+                            <div class="bg-blue-50 p-6 rounded-lg">
+                                <div class="text-sm text-blue-700">Total Paid</div>
+                                <div class="text-2xl font-bold text-blue-900" id="totalPaid">$0</div>
+                                <div class="text-xs text-blue-600 mt-2">All-time payments</div>
+                            </div>
+                            
+                            <div class="bg-red-50 p-6 rounded-lg">
+                                <div class="text-sm text-red-700">Balance Due</div>
+                                <div class="text-2xl font-bold text-red-900" id="balanceDue">$0</div>
+                                <div class="text-xs text-red-600 mt-2">Outstanding amount</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rent Progress Bar -->
+                        <div class="mt-6">
+                            <div class="flex justify-between text-sm text-slate-600 mb-2">
+                                <span>Rent Payment Progress</span>
+                                <span id="rentProgressText">0% paid</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="rentProgressFill" class="progress-fill bg-emerald-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>$0</span>
+                                <span id="rentTotalAmount">$0 total</span>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Recent Activity -->
                     <div class="bg-white rounded-xl shadow-lg p-6">
                         <div class="flex items-center justify-between mb-6">
                             <h3 class="text-xl font-bold text-slate-800">Recent Activity</h3>
-                            <button onclick="showSection('issues')" class="text-sm text-purple-600 hover:text-purple-700">
+                            <button onclick="showSection('payments')" class="text-sm text-purple-600 hover:text-purple-700">
                                 View All →
                             </button>
                         </div>
@@ -351,6 +426,7 @@
 
                 <!-- Profile Section -->
                 <div id="sectionProfile" class="hidden animate-fadeIn">
+                    <!-- Same as before, unchanged -->
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
                         <h2 class="text-2xl font-bold text-slate-800 mb-6">My Profile</h2>
                         
@@ -477,8 +553,96 @@
                     </div>
                 </div>
 
+                <!-- Payments Section -->
+                <div id="sectionPayments" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">My Payments</h2>
+                            <button onclick="exportPaymentHistory()" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                <i class="fas fa-download mr-2"></i>
+                                Export History
+                            </button>
+                        </div>
+                        
+                        <!-- Payment Summary -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-emerald-50 p-4 rounded-lg">
+                                <div class="text-sm text-emerald-700">Monthly Rent</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="paymentMonthlyRent">$0</div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-700">Total Paid</div>
+                                <div class="text-2xl font-bold text-blue-900" id="paymentTotalPaid">$0</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg">
+                                <div class="text-sm text-red-700">Balance Due</div>
+                                <div class="text-2xl font-bold text-red-900" id="paymentBalanceDue">$0</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="text-sm text-purple-700">Payments Count</div>
+                                <div class="text-2xl font-bold text-purple-900" id="paymentCount">0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Month Status -->
+                        <div class="mb-8 p-6 bg-purple-50 rounded-lg">
+                            <h3 class="font-bold text-purple-800 mb-4">Current Month Status</h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-lg font-bold text-slate-800" id="currentMonthName">Loading...</div>
+                                    <div class="text-sm text-slate-600" id="currentMonthStatus">Loading payment status...</div>
+                                </div>
+                                <div>
+                                    <span id="currentMonthBadge" class="px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800">
+                                        Pending
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-sm text-slate-600 mb-2">
+                                    <span>Payment Progress</span>
+                                    <span id="currentMonthProgressText">0% paid</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="currentMonthProgressFill" class="progress-fill bg-emerald-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment History -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">Payment History</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="paymentsTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">For Month</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="paymentsTableBody">
+                                        <!-- Payments will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div id="noPayments" class="text-center py-12 hidden">
+                                <i class="fas fa-money-bill-wave text-6xl text-slate-300 mb-4"></i>
+                                <h3 class="text-xl font-bold text-slate-700 mb-2">No Payment History</h3>
+                                <p class="text-slate-600">No payments have been recorded yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Issues Section -->
                 <div id="sectionIssues" class="hidden animate-fadeIn">
+                    <!-- Same as before, unchanged -->
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
                         <div class="flex items-center justify-between mb-6">
                             <h2 class="text-2xl font-bold text-slate-800">Issue Reporting</h2>
@@ -521,6 +685,7 @@
 
                 <!-- House Rules Section -->
                 <div id="sectionRules" class="hidden animate-fadeIn">
+                    <!-- Same as before, unchanged -->
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
                         <h2 class="text-2xl font-bold text-slate-800 mb-6">House Rules & Policies</h2>
                         
@@ -643,6 +808,7 @@
 
                 <!-- Check-out Request Section -->
                 <div id="sectionRequests" class="hidden animate-fadeIn">
+                    <!-- Same as before, unchanged -->
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
                         <h2 class="text-2xl font-bold text-slate-800 mb-6">Check-out Request</h2>
                         
@@ -933,10 +1099,42 @@
         </div>
     </div>
 
+    <!-- Receipt Download Modal -->
+    <div id="receiptModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Payment Receipt</h3>
+                    <button onclick="hideReceiptModal()" class="text-white hover:text-emerald-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div id="receiptContent" class="space-y-4">
+                    <!-- Receipt content will be loaded here -->
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-slate-200">
+                    <button onclick="downloadReceipt()" 
+                            class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3 rounded-lg transition">
+                        <i class="fas fa-download mr-2"></i>
+                        Download Receipt (PDF)
+                    </button>
+                    <p class="text-xs text-slate-500 text-center mt-3">
+                        Receipt will be downloaded as a PDF file
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let currentResident = null;
         let currentSection = 'dashboard';
+        let currentReceipt = null;
         
         // Load resident data
         function loadResidentData() {
@@ -962,6 +1160,7 @@
                 // Update UI with resident data
                 updateResidentUI(residentData);
                 updateDashboardStats(residentData);
+                loadPaymentSummary(residentData);
                 
             } catch (e) {
                 console.error('Error loading resident data:', e);
@@ -978,6 +1177,7 @@
             document.getElementById('sidebarResidentRoom').textContent = `Room: ${resident.roomAssigned || 'Not assigned'}`;
             document.getElementById('residentRoomNumber').textContent = resident.roomAssigned || 'Not assigned';
             document.getElementById('checkoutRoom').textContent = resident.roomAssigned || 'Not assigned';
+            document.getElementById('monthlyRentAmount').textContent = `$${parseFloat(resident.monthlyRent || 0).toFixed(2)}`;
             
             // Update last login
             const lastLogin = new Date(currentResident.loginTime);
@@ -1045,6 +1245,66 @@
             loadRecentActivity();
         }
         
+        // Load payment summary
+        function loadPaymentSummary(resident) {
+            try {
+                // Get resident's payments from localStorage
+                const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                
+                // Calculate totals
+                let totalPaid = 0;
+                let currentMonthPaid = 0;
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                
+                payments.forEach(payment => {
+                    const paymentAmount = parseFloat(payment.amount) || 0;
+                    totalPaid += paymentAmount;
+                    
+                    // Check if payment is for current month
+                    const paymentDate = new Date(payment.date);
+                    if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+                        currentMonthPaid += paymentAmount;
+                    }
+                });
+                
+                const monthlyRent = parseFloat(resident.monthlyRent || 0);
+                const balanceDue = Math.max(0, monthlyRent - currentMonthPaid);
+                
+                // Update dashboard elements
+                document.getElementById('currentMonthPaid').textContent = `$${currentMonthPaid.toFixed(2)}`;
+                document.getElementById('totalPaid').textContent = `$${totalPaid.toFixed(2)}`;
+                document.getElementById('balanceDue').textContent = `$${balanceDue.toFixed(2)}`;
+                document.getElementById('rentTotalAmount').textContent = `$${monthlyRent.toFixed(2)} total`;
+                
+                // Update payment status
+                const paymentStatus = document.getElementById('paymentStatus');
+                const paymentDetails = document.getElementById('paymentDetails');
+                
+                if (currentMonthPaid >= monthlyRent) {
+                    paymentStatus.textContent = 'Paid';
+                    paymentStatus.className = 'text-3xl font-bold text-emerald-600';
+                    paymentDetails.textContent = 'Rent fully paid for current month';
+                } else if (currentMonthPaid > 0) {
+                    paymentStatus.textContent = 'Partial';
+                    paymentStatus.className = 'text-3xl font-bold text-amber-600';
+                    paymentDetails.textContent = `$${balanceDue.toFixed(2)} remaining`;
+                } else {
+                    paymentStatus.textContent = 'Due';
+                    paymentStatus.className = 'text-3xl font-bold text-red-600';
+                    paymentDetails.textContent = `$${monthlyRent.toFixed(2)} due`;
+                }
+                
+                // Update progress bar
+                const progressPercent = monthlyRent > 0 ? Math.min(100, (currentMonthPaid / monthlyRent) * 100) : 0;
+                document.getElementById('rentProgressFill').style.width = `${progressPercent}%`;
+                document.getElementById('rentProgressText').textContent = `${progressPercent.toFixed(0)}% paid`;
+                
+            } catch (e) {
+                console.error('Error loading payment summary:', e);
+            }
+        }
+        
         // Load my issues statistics
         function loadMyIssuesStats() {
             try {
@@ -1095,9 +1355,21 @@
         function loadRecentActivity() {
             try {
                 const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
                 const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
                 
                 let activities = [];
+                
+                // Add recent payments
+                payments.slice(-3).reverse().forEach(payment => {
+                    activities.push({
+                        type: 'payment',
+                        text: `Payment: $${parseFloat(payment.amount).toFixed(2)}`,
+                        status: 'paid',
+                        time: payment.date,
+                        icon: 'fas fa-money-bill-wave'
+                    });
+                });
                 
                 // Add recent issues
                 myIssues.slice(-3).reverse().forEach(issue => {
@@ -1111,13 +1383,13 @@
                 });
                 
                 // Add system notifications
-                if (myIssues.length === 0) {
+                if (activities.length === 0) {
                     activities.push({
                         type: 'info',
-                        text: 'No issues reported. All systems normal.',
+                        text: 'No recent activity',
                         status: 'active',
                         time: new Date().toISOString(),
-                        icon: 'fas fa-check-circle'
+                        icon: 'fas fa-info-circle'
                     });
                 }
                 
@@ -1128,17 +1400,22 @@
                 const activityHtml = activities.map(activity => `
                     <div class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
                         <div class="w-10 h-10 rounded-full 
-                            ${activity.type === 'issue' ? 'bg-red-100' : 'bg-emerald-100'} 
+                            ${activity.type === 'payment' ? 'bg-emerald-100' : 
+                              activity.type === 'issue' ? 'bg-red-100' : 
+                              'bg-blue-100'} 
                             flex items-center justify-center">
                             <i class="${activity.icon} 
-                                ${activity.type === 'issue' ? 'text-red-600' : 'text-emerald-600'}"></i>
+                                ${activity.type === 'payment' ? 'text-emerald-600' : 
+                                  activity.type === 'issue' ? 'text-red-600' : 
+                                  'text-blue-600'}"></i>
                         </div>
                         <div class="flex-1">
                             <div class="text-sm font-medium text-slate-800">${activity.text}</div>
                             <div class="flex items-center gap-2 mt-1">
                                 <span class="text-xs text-slate-500">${new Date(activity.time).toLocaleDateString()}</span>
                                 <span class="text-xs px-2 py-1 rounded-full
-                                    ${activity.status === 'open' ? 'bg-red-100 text-red-800' :
+                                    ${activity.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
+                                      activity.status === 'open' ? 'bg-red-100 text-red-800' :
                                       activity.status === 'in-progress' ? 'bg-amber-100 text-amber-800' :
                                       activity.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
                                       'bg-blue-100 text-blue-800'}">
@@ -1192,6 +1469,9 @@
                 case 'profile':
                     loadProfile();
                     break;
+                case 'payments':
+                    loadPayments();
+                    break;
                 case 'issues':
                     loadIssues();
                     break;
@@ -1212,6 +1492,124 @@
         // Load profile data
         function loadProfile() {
             // Already loaded on initialization
+        }
+        
+        // Load payments data
+        function loadPayments() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentData = residents.find(r => r.id === currentResident.id);
+                
+                if (!residentData) return;
+                
+                // Get payments
+                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const monthlyRent = parseFloat(residentData.monthlyRent || 0);
+                
+                // Update payment summary
+                let totalPaid = 0;
+                let currentMonthPaid = 0;
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                
+                payments.forEach(payment => {
+                    const paymentAmount = parseFloat(payment.amount) || 0;
+                    totalPaid += paymentAmount;
+                    
+                    const paymentDate = new Date(payment.date);
+                    if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+                        currentMonthPaid += paymentAmount;
+                    }
+                });
+                
+                const balanceDue = Math.max(0, monthlyRent - currentMonthPaid);
+                const progressPercent = monthlyRent > 0 ? Math.min(100, (currentMonthPaid / monthlyRent) * 100) : 0;
+                
+                // Update summary cards
+                document.getElementById('paymentMonthlyRent').textContent = `$${monthlyRent.toFixed(2)}`;
+                document.getElementById('paymentTotalPaid').textContent = `$${totalPaid.toFixed(2)}`;
+                document.getElementById('paymentBalanceDue').textContent = `$${balanceDue.toFixed(2)}`;
+                document.getElementById('paymentCount').textContent = payments.length;
+                
+                // Update current month status
+                document.getElementById('currentMonthName').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                document.getElementById('currentMonthProgressText').textContent = `${progressPercent.toFixed(0)}% paid ($${currentMonthPaid.toFixed(2)} of $${monthlyRent.toFixed(2)})`;
+                document.getElementById('currentMonthProgressFill').style.width = `${progressPercent}%`;
+                
+                const currentMonthBadge = document.getElementById('currentMonthBadge');
+                const currentMonthStatus = document.getElementById('currentMonthStatus');
+                
+                if (currentMonthPaid >= monthlyRent) {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-800';
+                    currentMonthBadge.textContent = 'Paid';
+                    currentMonthStatus.textContent = 'Rent fully paid for this month';
+                } else if (currentMonthPaid > 0) {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800';
+                    currentMonthBadge.textContent = 'Partial';
+                    currentMonthStatus.textContent = `$${balanceDue.toFixed(2)} remaining for this month`;
+                } else {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800';
+                    currentMonthBadge.textContent = 'Due';
+                    currentMonthStatus.textContent = `$${monthlyRent.toFixed(2)} due for this month`;
+                }
+                
+                // Update payment table
+                const tbody = document.getElementById('paymentsTableBody');
+                const noPaymentsDiv = document.getElementById('noPayments');
+                
+                if (payments.length === 0) {
+                    tbody.innerHTML = '';
+                    noPaymentsDiv.classList.remove('hidden');
+                    return;
+                }
+                
+                noPaymentsDiv.classList.add('hidden');
+                
+                // Sort payments by date (newest first)
+                payments.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                tbody.innerHTML = payments.map(payment => {
+                    const paymentDate = new Date(payment.date);
+                    const formattedDate = paymentDate.toLocaleDateString();
+                    const amount = parseFloat(payment.amount).toFixed(2);
+                    
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${formattedDate}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                                $${amount}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${payment.method || 'Cash'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${payment.month || 'N/A'}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                    Paid
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="viewReceipt('${payment.id}')" 
+                                        class="text-blue-600 hover:text-blue-900 mr-3">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button onclick="downloadReceiptPdf('${payment.id}')" 
+                                        class="text-emerald-600 hover:text-emerald-900">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading payments:', e);
+            }
         }
         
         // Load issues data
@@ -1352,6 +1750,226 @@
             } catch (e) {
                 console.error('Error loading checkout requests:', e);
             }
+        }
+        
+        // View receipt
+        function viewReceipt(paymentId) {
+            try {
+                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const payment = payments.find(p => p.id === paymentId);
+                
+                if (!payment) {
+                    alert('Receipt not found');
+                    return;
+                }
+                
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                currentReceipt = payment;
+                
+                const paymentDate = new Date(payment.date);
+                const formattedDate = paymentDate.toLocaleDateString();
+                const formattedTime = paymentDate.toLocaleTimeString();
+                
+                document.getElementById('receiptContent').innerHTML = `
+                    <div class="text-center mb-6">
+                        <h4 class="text-xl font-bold text-slate-800">Gina's Hostel</h4>
+                        <p class="text-sm text-slate-600">Payment Receipt</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Receipt No:</span>
+                            <span class="font-medium">${payment.id}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Date:</span>
+                            <span class="font-medium">${formattedDate}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Time:</span>
+                            <span class="font-medium">${formattedTime}</span>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Resident:</span>
+                                <span class="font-medium">${resident.fullName}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">Room:</span>
+                                <span class="font-medium">${resident.roomAssigned || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Payment Amount:</span>
+                                <span class="text-xl font-bold text-emerald-600">$${parseFloat(payment.amount).toFixed(2)}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">Payment Method:</span>
+                                <span class="font-medium">${payment.method || 'Cash'}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">For Month:</span>
+                                <span class="font-medium">${payment.month || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="text-sm text-slate-600">Notes:</div>
+                            <div class="text-sm text-slate-700">${payment.notes || 'No additional notes'}</div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Received by:</span>
+                                <span class="font-medium">${payment.recordedBy || 'Admin'}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-3 bg-slate-50 rounded-lg">
+                        <p class="text-xs text-slate-600 text-center">
+                            This is an official receipt from Gina's Hostel. Please keep it for your records.
+                        </p>
+                    </div>
+                `;
+                
+                document.getElementById('receiptModal').classList.remove('hidden');
+                
+            } catch (e) {
+                console.error('Error viewing receipt:', e);
+                alert('Error loading receipt');
+            }
+        }
+        
+        // Download receipt as PDF
+        function downloadReceiptPdf(paymentId) {
+            try {
+                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const payment = payments.find(p => p.id === paymentId);
+                
+                if (!payment) {
+                    alert('Receipt not found');
+                    return;
+                }
+                
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                const paymentDate = new Date(payment.date);
+                const formattedDate = paymentDate.toLocaleDateString();
+                const formattedTime = paymentDate.toLocaleTimeString();
+                
+                // Create receipt content as text
+                const receiptContent = `
+                    GINA'S HOSTEL - OFFICIAL RECEIPT
+                    =================================
+                    
+                    Receipt No: ${payment.id}
+                    Date: ${formattedDate}
+                    Time: ${formattedTime}
+                    
+                    ---------------------------------
+                    RESIDENT DETAILS:
+                    Name: ${resident.fullName}
+                    Room: ${resident.roomAssigned || 'N/A'}
+                    Resident ID: ${resident.id}
+                    
+                    ---------------------------------
+                    PAYMENT DETAILS:
+                    Amount: $${parseFloat(payment.amount).toFixed(2)}
+                    Method: ${payment.method || 'Cash'}
+                    For Month: ${payment.month || 'N/A'}
+                    Notes: ${payment.notes || 'No additional notes'}
+                    
+                    ---------------------------------
+                    TRANSACTION INFO:
+                    Received by: ${payment.recordedBy || 'Admin'}
+                    Transaction ID: ${payment.id}
+                    
+                    =================================
+                    This is an official receipt from Gina's Hostel.
+                    Please keep this for your records.
+                    
+                    For any queries, contact:
+                    Emergency: +263 71 139 1414
+                    WhatsApp: +263 77 130 8790
+                    
+                    Generated: ${new Date().toLocaleString()}
+                `;
+                
+                // Create and download text file
+                const blob = new Blob([receiptContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `receipt_${payment.id}_${formattedDate.replace(/\//g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Receipt downloaded successfully!');
+                
+            } catch (e) {
+                console.error('Error downloading receipt:', e);
+                alert('Error downloading receipt');
+            }
+        }
+        
+        // Export payment history
+        function exportPaymentHistory() {
+            try {
+                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                if (payments.length === 0) {
+                    alert('No payment history to export');
+                    return;
+                }
+                
+                // Create CSV content
+                let csvContent = 'Date,Amount,Method,For Month,Notes\n';
+                
+                payments.forEach(payment => {
+                    const date = new Date(payment.date).toLocaleDateString();
+                    const amount = parseFloat(payment.amount).toFixed(2);
+                    const method = payment.method || 'Cash';
+                    const month = payment.month || '';
+                    const notes = (payment.notes || '').replace(/,/g, ';');
+                    
+                    csvContent += `${date},$${amount},${method},${month},${notes}\n`;
+                });
+                
+                // Create and download CSV file
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payment_history_${currentResident.id}_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                alert('Payment history exported successfully!');
+                
+            } catch (e) {
+                console.error('Error exporting payment history:', e);
+                alert('Error exporting payment history');
+            }
+        }
+        
+        // View payment history
+        function viewPaymentHistory() {
+            showSection('payments');
         }
         
         // Show report issue modal
@@ -1618,6 +2236,125 @@
         function toggleSidebar() {
             const sidebar = document.getElementById('mobileSidebar');
             sidebar.classList.toggle('hidden');
+            
+            if (!sidebar.classList.contains('hidden')) {
+                loadMobileSidebar();
+            }
+        }
+        
+        // Load mobile sidebar
+        function loadMobileSidebar() {
+            const sidebar = document.getElementById('mobileSidebar').querySelector('div > div');
+            const resident = JSON.parse(localStorage.getItem('approvedResidents') || '[]').find(r => r.id === currentResident.id);
+            
+            if (!resident) return;
+            
+            sidebar.innerHTML = `
+                <div class="p-6">
+                    <!-- Resident Info for Mobile -->
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-r from-purple-600 to-purple-800 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user text-white text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${resident.fullName}</h3>
+                        <p class="text-sm text-slate-600">Room: ${resident.roomAssigned || 'Not assigned'}</p>
+                        <div class="mt-2">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                ${resident.status || 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation for Mobile -->
+                    <div class="space-y-2 mb-8">
+                        <button onclick="showSection('dashboard'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'dashboard' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </button>
+                        
+                        <button onclick="showSection('profile'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'profile' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-user-circle mr-3"></i>
+                            My Profile
+                        </button>
+
+                        <button onclick="showSection('payments'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'payments' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            My Payments
+                        </button>
+                        
+                        <button onclick="showSection('issues'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'issues' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            Report Issue
+                        </button>
+                        
+                        <button onclick="showSection('rules'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'rules' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-file-contract mr-3"></i>
+                            House Rules
+                        </button>
+                        
+                        <button onclick="showSection('requests'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'requests' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            Check-out Request
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Actions for Mobile -->
+                    <div class="pt-6 border-t border-slate-200">
+                        <h4 class="font-bold text-slate-700 mb-3">Quick Actions</h4>
+                        <div class="space-y-2">
+                            <button onclick="showReportIssueModal(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Report New Issue
+                            </button>
+                            <button onclick="contactAdmin(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-headset mr-2"></i>
+                                Contact Admin
+                            </button>
+                            <button onclick="viewPaymentHistory(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-history mr-2"></i>
+                                Payment History
+                            </button>
+                            <button onclick="viewStayDetails(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-calendar mr-2"></i>
+                                View Stay Details
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Emergency Contacts for Mobile -->
+                    <div class="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-2">Emergency Contacts</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-user text-red-600"></i>
+                                <span>Caretaker Garry</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-phone text-red-600"></i>
+                                <a href="tel:+263711391414" class="text-red-700 hover:underline">
+                                    Emergency Call
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-whatsapp text-green-600"></i>
+                                <a href="https://wa.me/263771308790" target="_blank" class="text-red-700 hover:underline">
+                                    Emergency WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
         }
         
         // Toggle notifications
@@ -1657,7 +2394,7 @@
                     myOpenIssues.slice(0, 5).forEach(issue => {
                         notificationsHtml += `
                             <div class="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
-                                 onclick="showSection('issues')">
+                                 onclick="showSection('issues'); document.getElementById('notificationDropdown').classList.add('hidden');">
                                 <div class="flex items-center gap-3">
                                     <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
                                         <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
@@ -1679,10 +2416,10 @@
                 notificationsHtml += `
                     </div>
                     <div class="p-4 border-t border-slate-200">
-                        <a href="#all" onclick="showSection('issues')" 
-                           class="text-sm text-blue-600 hover:text-blue-700">
+                        <button onclick="showSection('issues'); document.getElementById('notificationDropdown').classList.add('hidden');" 
+                               class="text-sm text-blue-600 hover:text-blue-700">
                             View all notifications
-                        </a>
+                        </button>
                     </div>
                 `;
                 
@@ -1690,6 +2427,20 @@
                 
             } catch (e) {
                 console.error('Error loading notifications:', e);
+            }
+        }
+        
+        // Hide receipt modal
+        function hideReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+            currentReceipt = null;
+        }
+        
+        // Download receipt
+        function downloadReceipt() {
+            if (currentReceipt) {
+                downloadReceiptPdf(currentReceipt.id);
+                hideReceiptModal();
             }
         }
         
@@ -1723,7 +2474,7 @@
             
             // Set up auto-refresh for dashboard
             setInterval(() => {
-                if (currentSection === 'dashboard') {
+                if (currentSection === 'dashboard' || currentSection === 'payments') {
                     loadResidentData();
                 }
             }, 30000); // Refresh every 30 seconds
@@ -1734,14 +2485,21 @@
                 if (notificationContainer && !notificationContainer.contains(event.target)) {
                     document.getElementById('notificationDropdown').classList.add('hidden');
                 }
-            });
-            
-            // Close mobile sidebar when clicking outside
-            document.addEventListener('click', function(event) {
+                
                 const mobileSidebar = document.getElementById('mobileSidebar');
                 if (mobileSidebar && !mobileSidebar.contains(event.target) && !event.target.closest('[onclick="toggleSidebar()"]')) {
                     mobileSidebar.classList.add('hidden');
                 }
+                
+                const modals = ['reportIssueModal', 'updateProfileModal', 'receiptModal'];
+                modals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (modal && !modal.contains(event.target) && !modal.classList.contains('hidden')) {
+                        if (modalId === 'reportIssueModal') hideReportIssueModal();
+                        if (modalId === 'updateProfileModal') hideUpdateProfileModal();
+                        if (modalId === 'receiptModal') hideReceiptModal();
+                    }
+                });
             });
         });
     </script>
