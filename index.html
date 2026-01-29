@@ -6,28 +6,19 @@
     <title>Gina's Hostel - Welcome</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
-    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(20px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        @keyframes pulse-warning {
+        @keyframes pulse {
             0%, 100% { opacity: 1; }
             50% { opacity: 0.5; }
         }
         .animate-fadeIn { animation: fadeIn 0.6s ease-out; }
-        .animate-pulse-warning { animation: pulse-warning 2s infinite; }
+        .animate-pulse { animation: pulse 2s infinite; }
         .bg-gradient-primary { background: linear-gradient(135deg, #1e3a8a 0%, #0ea5e9 100%); }
         .bg-gradient-emergency { background: linear-gradient(135deg, #dc2626 0%, #ef4444 100%); }
-        .glass-effect {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-        }
         .capacity-bar {
             height: 20px;
             border-radius: 10px;
@@ -37,6 +28,18 @@
         .capacity-fill {
             height: 100%;
             transition: width 0.5s ease;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .floating {
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
         }
     </style>
 </head>
@@ -49,17 +52,17 @@
                     <i class="fas fa-phone-alt text-xl"></i>
                     <span class="font-bold">EMERGENCY CONTACTS:</span>
                 </div>
-                <div class="flex flex-wrap items-center justify-center gap-4 text-sm">
-                    <span class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
-                        <i class="fas fa-user"></i>
-                        Caretaker Garry: 
-                        <a href="tel:+263711391414" class="font-bold">+263 71 139 1414</a>
-                    </span>
-                    <span class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full">
-                        <i class="fab fa-whatsapp"></i>
-                        WhatsApp: 
-                        <a href="https://wa.me/263771308790" target="_blank" class="font-bold">+263 77 130 8790</a>
-                    </span>
+                <div class="flex items-center justify-center gap-4 text-sm">
+                    <a href="tel:+263711391414" 
+                       class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition group">
+                        <i class="fas fa-phone text-lg group-hover:scale-110 transition"></i>
+                        <span class="font-bold">Emergency Call</span>
+                    </a>
+                    <a href="https://wa.me/263771308790" target="_blank"
+                       class="flex items-center gap-2 bg-white/20 px-3 py-1 rounded-full hover:bg-white/30 transition group">
+                        <i class="fab fa-whatsapp text-lg group-hover:scale-110 transition"></i>
+                        <span class="font-bold">Emergency WhatsApp</span>
+                    </a>
                 </div>
             </div>
         </div>
@@ -67,15 +70,10 @@
 
     <!-- Security Alert Banner -->
     <div class="bg-amber-50 border-b border-amber-200 py-2 px-4">
-        <div class="max-w-7xl mx-auto flex items-center justify-between gap-4 text-sm">
-            <div class="flex items-center gap-2">
-                <i class="fas fa-shield-alt text-amber-600"></i>
-                <span class="font-medium text-amber-800">Security Status: Active</span>
-                <span class="text-amber-600 hidden md:inline">• Gates Lock at 8:00 PM • No Male Visitors • Female Visitors Leave by 8:00 PM</span>
-            </div>
-            <div id="capacityStatus" class="flex items-center gap-2">
-                <!-- Capacity status will be updated by JS -->
-            </div>
+        <div class="max-w-7xl mx-auto flex items-center justify-center gap-2 text-sm">
+            <i class="fas fa-shield-alt text-amber-600"></i>
+            <span class="font-medium text-amber-800">Security Status: Active</span>
+            <span class="text-amber-600 hidden md:inline">• Gates Lock at 8:00 PM • No Male Visitors</span>
         </div>
     </div>
 
@@ -89,12 +87,12 @@
                         <!-- Welcome Header -->
                         <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-8">
                             <div class="flex items-center gap-4">
-                                <div class="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg">
+                                <div class="w-20 h-20 rounded-full bg-gradient-primary flex items-center justify-center shadow-lg floating">
                                     <i class="fas fa-home text-white text-3xl"></i>
                                 </div>
                                 <div>
                                     <h1 class="text-4xl font-bold text-slate-900">Gina's Hostel</h1>
-                                    <p class="text-lg text-slate-600 mt-1">Advanced Hostel Management System</p>
+                                    <p class="text-lg text-slate-600 mt-1">Advanced Student Accommodation System</p>
                                 </div>
                             </div>
                             <div class="flex items-center gap-4">
@@ -138,18 +136,18 @@
                                 <div class="text-sm text-slate-600">Awaiting admin review</div>
                             </div>
 
-                            <!-- Revenue Card -->
+                            <!-- System Status Card -->
                             <div class="bg-white rounded-xl p-6 shadow-lg">
                                 <div class="flex items-center justify-between mb-4">
                                     <div>
-                                        <div class="text-sm text-slate-500">Monthly Revenue</div>
-                                        <div class="text-3xl font-bold text-emerald-600" id="monthlyRevenue">$0</div>
+                                        <div class="text-sm text-slate-500">System Status</div>
+                                        <div class="text-3xl font-bold text-emerald-600">100%</div>
                                     </div>
                                     <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                                        <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
+                                        <i class="fas fa-server text-emerald-600 text-xl"></i>
                                     </div>
                                 </div>
-                                <div class="text-sm text-slate-600">From all residents</div>
+                                <div class="text-sm text-slate-600">All systems operational</div>
                             </div>
                         </div>
 
@@ -182,6 +180,34 @@
                             </div>
                         </div>
 
+                        <!-- Process Flow -->
+                        <div class="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-xl shadow-lg p-6 mb-8">
+                            <h2 class="text-xl font-bold text-slate-800 mb-4">How It Works</h2>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="text-center p-4">
+                                    <div class="w-16 h-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-user-plus text-blue-600 text-2xl"></i>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 mb-2">1. Apply</h3>
+                                    <p class="text-sm text-slate-600">Submit your check-in request with details</p>
+                                </div>
+                                <div class="text-center p-4">
+                                    <div class="w-16 h-16 rounded-full bg-amber-100 flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-user-shield text-amber-600 text-2xl"></i>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 mb-2">2. Admin Approval</h3>
+                                    <p class="text-sm text-slate-600">Wait for admin review and approval</p>
+                                </div>
+                                <div class="text-center p-4">
+                                    <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                                        <i class="fas fa-home text-emerald-600 text-2xl"></i>
+                                    </div>
+                                    <h3 class="font-bold text-slate-800 mb-2">3. Move In</h3>
+                                    <p class="text-sm text-slate-600">Get room assignment and access dashboard</p>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Recent Activity -->
                         <div class="bg-white rounded-xl shadow-lg p-6">
                             <h2 class="text-xl font-bold text-slate-800 mb-6">Recent Activity</h2>
@@ -204,36 +230,32 @@
                             </div>
                             <div>
                                 <h2 class="text-2xl font-bold">Admin Portal</h2>
-                                <p class="opacity-90">Full system management</p>
+                                <p class="opacity-90">Secure Management Access</p>
                             </div>
                         </div>
                         
                         <div class="space-y-4 mb-6">
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-check-circle text-green-400"></i>
-                                <span>Approve resident check-ins</span>
-                            </div>
-                            <div class="flex items-center gap-3">
-                                <i class="fas fa-money-bill-wave text-green-400"></i>
-                                <span>Track rental payments</span>
+                                <span>Full System Control</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-bell text-yellow-400"></i>
-                                <span>Handle issue reports</span>
+                                <span>Issue Management</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <i class="fas fa-file-export text-blue-400"></i>
-                                <span>Generate reports</span>
+                                <span>Advanced Reporting</span>
                             </div>
                             <div class="flex items-center gap-3">
                                 <i class="fab fa-whatsapp text-green-400"></i>
-                                <span>Send WhatsApp notifications</span>
+                                <span>Instant Notifications</span>
                             </div>
                         </div>
                         
                         <form id="adminLoginForm" class="space-y-4">
                             <div>
-                                <input type="password" id="adminPassword" placeholder="Enter Admin Password" 
+                                <input type="password" id="adminPassword" placeholder="Admin Password" 
                                        class="w-full bg-white/10 border border-white/20 rounded-lg px-4 py-3 placeholder-white/50 focus:ring-2 focus:ring-white/50 focus:border-transparent transition">
                             </div>
                             <button type="submit" 
@@ -246,7 +268,7 @@
                         <div id="adminLoginError" class="mt-4 p-3 bg-red-500/20 border border-red-500/30 rounded-lg hidden">
                             <div class="flex items-center gap-2 text-red-200">
                                 <i class="fas fa-exclamation-circle"></i>
-                                <span>Incorrect password. Please try again.</span>
+                                <span>Access Denied</span>
                             </div>
                         </div>
                     </div>
@@ -261,27 +283,58 @@
                                 </div>
                                 <div>
                                     <div class="font-bold">Caretaker Garry</div>
-                                    <div class="text-sm opacity-90">Available 24/7 for emergencies</div>
+                                    <div class="text-sm opacity-90">Available 24/7</div>
                                 </div>
                             </div>
                             
                             <div class="grid grid-cols-1 gap-3">
                                 <a href="tel:+263711391414" 
-                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition">
-                                    <i class="fas fa-phone"></i>
-                                    <span>Call: +263 71 139 1414</span>
+                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition group">
+                                    <i class="fas fa-phone text-lg group-hover:scale-110 transition"></i>
+                                    <span>Emergency Call</span>
                                 </a>
                                 <a href="https://wa.me/263771308790" target="_blank"
-                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition">
-                                    <i class="fab fa-whatsapp"></i>
-                                    <span>WhatsApp: +263 77 130 8790</span>
+                                   class="flex items-center justify-center gap-2 bg-white/20 hover:bg-white/30 px-4 py-3 rounded-lg transition group">
+                                    <i class="fab fa-whatsapp text-lg group-hover:scale-110 transition"></i>
+                                    <span>Emergency WhatsApp</span>
                                 </a>
                             </div>
                         </div>
                     </div>
 
-                    <!-- System Status -->
+                    <!-- Security Rules -->
                     <div class="bg-white rounded-xl shadow-lg p-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4">Security Rules</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <i class="fas fa-lock text-red-600"></i>
+                                </div>
+                                <div class="text-sm text-slate-700">Gates lock at 8:00 PM sharp</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <i class="fas fa-user-slash text-red-600"></i>
+                                </div>
+                                <div class="text-sm text-slate-700">No male visitors inside compound</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <i class="fas fa-female text-red-600"></i>
+                                </div>
+                                <div class="text-sm text-slate-700">Female visitors leave by 8:00 PM</div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                    <i class="fas fa-dog text-red-600"></i>
+                                </div>
+                                <div class="text-sm text-slate-700">Guard dogs released after curfew</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- System Status -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mt-6">
                         <h3 class="text-xl font-bold text-slate-800 mb-4">System Status</h3>
                         <div class="space-y-3">
                             <div class="flex items-center justify-between">
@@ -289,15 +342,15 @@
                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Online</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-700">WhatsApp Integration</span>
-                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Ready</span>
-                            </div>
-                            <div class="flex items-center justify-between">
-                                <span class="text-slate-700">Report Generation</span>
+                                <span class="text-slate-700">Resident Portal</span>
                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Active</span>
                             </div>
                             <div class="flex items-center justify-between">
-                                <span class="text-slate-700">Security</span>
+                                <span class="text-slate-700">Admin Portal</span>
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Secure</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-slate-700">Notifications</span>
                                 <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Enabled</span>
                             </div>
                         </div>
@@ -312,7 +365,7 @@
                 <div class="flex flex-col md:flex-row items-center justify-between gap-4">
                     <div class="text-center md:text-left">
                         <h3 class="font-bold text-slate-800">Gina's Hostel Advanced Management System</h3>
-                        <p class="text-sm text-slate-600">Version 5.0 • Complete Digital Solution</p>
+                        <p class="text-sm text-slate-600">Complete Digital Solution • Version 6.0</p>
                     </div>
                     
                     <div class="flex items-center gap-6">
@@ -322,7 +375,7 @@
                         </div>
                         
                         <div class="text-center">
-                            <div class="text-xs text-slate-500">System Uptime</div>
+                            <div class="text-xs text-slate-500">Uptime</div>
                             <div class="text-sm font-medium text-green-700">100%</div>
                         </div>
                     </div>
@@ -331,7 +384,7 @@
                 <div class="mt-4 pt-4 border-t border-slate-100 text-center">
                     <p class="text-xs text-slate-500">
                         <i class="fas fa-shield-alt mr-1"></i>
-                        Emergency: Call Caretaker Garry +263 71 139 1414 • WhatsApp +263 77 130 8790
+                        Emergency contacts available 24/7 • All data securely stored
                         © <span id="currentYear"></span> Gina's Hostel Management
                     </p>
                 </div>
@@ -349,7 +402,7 @@
                         <i class="fas fa-times text-xl"></i>
                     </button>
                 </div>
-                <p class="text-sm opacity-90 mt-1">Complete your check-in request for admin approval</p>
+                <p class="text-sm opacity-90 mt-1">Complete check-in request for admin approval</p>
             </div>
             
             <div class="p-6">
@@ -450,8 +503,10 @@
                 </form>
                 
                 <div id="registrationMessage" class="mt-4 p-3 rounded-lg hidden">
-                    <i class="fas mr-2"></i>
-                    <span></span>
+                    <div class="flex items-center gap-2">
+                        <i class="fas mr-2"></i>
+                        <span></span>
+                    </div>
                 </div>
             </div>
         </div>
@@ -487,7 +542,6 @@
             try {
                 const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
                 const pending = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
-                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
                 
                 // Update counts
                 const currentResidents = residents.length;
@@ -500,34 +554,17 @@
                 document.getElementById('availableSpots').textContent = `${availableSpots} spots available`;
                 document.getElementById('capacityFill').style.width = `${occupancyPercent}%`;
                 
-                // Update capacity status
-                const capacityStatus = document.getElementById('capacityStatus');
+                // Update capacity warning
                 if (currentResidents >= 13) {
-                    capacityStatus.innerHTML = `
-                        <i class="fas fa-exclamation-triangle text-red-600 animate-pulse-warning"></i>
-                        <span class="font-bold text-red-700">Hostel Full - No New Check-ins</span>
-                    `;
+                    document.getElementById('availableSpots').className = 'font-medium text-red-600';
+                    document.getElementById('capacityFill').className = 'capacity-fill bg-red-500';
+                } else if (currentResidents >= 10) {
+                    document.getElementById('availableSpots').className = 'font-medium text-amber-600';
+                    document.getElementById('capacityFill').className = 'capacity-fill bg-amber-500';
                 } else {
-                    capacityStatus.innerHTML = `
-                        <i class="fas fa-check-circle text-green-600"></i>
-                        <span class="font-medium text-green-700">${availableSpots} spots available</span>
-                    `;
+                    document.getElementById('availableSpots').className = 'font-medium text-green-600';
+                    document.getElementById('capacityFill').className = 'capacity-fill bg-green-500';
                 }
-                
-                // Calculate monthly revenue
-                let monthlyRevenue = 0;
-                residents.forEach(resident => {
-                    const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
-                    const thisMonth = new Date().getMonth();
-                    payments.forEach(payment => {
-                        const paymentMonth = new Date(payment.date).getMonth();
-                        if (paymentMonth === thisMonth) {
-                            monthlyRevenue += parseFloat(payment.amount) || 0;
-                        }
-                    });
-                });
-                
-                document.getElementById('monthlyRevenue').textContent = `$${monthlyRevenue.toFixed(2)}`;
                 
                 // Load recent activity
                 loadRecentActivity();
@@ -542,11 +579,10 @@
             try {
                 const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
                 const pending = JSON.parse(localStorage.getItem('pendingResidents') || '[]');
-                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
                 
                 let activities = [];
                 
-                // Add recent residents
+                // Add recent check-ins
                 residents.slice(-3).reverse().forEach(resident => {
                     activities.push({
                         type: 'checkin',
@@ -565,17 +601,6 @@
                         time: resident.requestedAt,
                         color: 'text-amber-600',
                         icon: 'fas fa-clock'
-                    });
-                });
-                
-                // Add recent issues
-                issues.slice(-2).reverse().forEach(issue => {
-                    activities.push({
-                        type: 'issue',
-                        text: `Issue reported: ${issue.title}`,
-                        time: issue.reportedAt,
-                        color: 'text-red-600',
-                        icon: 'fas fa-exclamation-triangle'
                     });
                 });
                 
@@ -679,7 +704,7 @@
                 idNumber: idNumber,
                 emergencyName: formData.get('emergencyName'),
                 emergencyPhone: formData.get('emergencyPhone'),
-                password: btoa(password), // Base64 encode (in production, use proper hashing)
+                password: btoa(password), // Base64 encode
                 status: 'pending',
                 requestedAt: new Date().toISOString(),
                 approvedAt: null,
@@ -697,7 +722,7 @@
                 // Show success message
                 const messageDiv = document.getElementById('registrationMessage');
                 messageDiv.className = 'mt-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg text-emerald-700';
-                messageDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Check-in request submitted successfully! Awaiting admin approval. You will receive WhatsApp notification upon approval.</span>';
+                messageDiv.innerHTML = '<i class="fas fa-check-circle mr-2"></i><span>Check-in request submitted! Awaiting admin approval. You will receive WhatsApp notification upon approval.</span>';
                 messageDiv.classList.remove('hidden');
                 
                 // Reset form after delay
