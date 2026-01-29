@@ -1,0 +1,2738 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gina's Hostel - Resident Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/jquery.dataTables.min.css">
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <style>
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes slideIn {
+            from { transform: translateX(-100%); }
+            to { transform: translateX(0); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        .animate-fadeIn { animation: fadeIn 0.3s ease-out; }
+        .animate-slideIn { animation: slideIn 0.3s ease-out; }
+        .animate-pulse { animation: pulse 2s infinite; }
+        .sidebar-item.active {
+            background: linear-gradient(90deg, #8b5cf6 0%, #7c3aed 100%);
+            color: white;
+        }
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .status-indicator {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 8px;
+        }
+        .status-active { background-color: #10b981; }
+        .status-pending { background-color: #f59e0b; }
+        .status-resolved { background-color: #3b82f6; }
+        .status-closed { background-color: #6b7280; }
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            background: #e5e7eb;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .floating-notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            animation: fadeIn 0.5s ease-out;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Session Check & Redirect -->
+    <script>
+        // Check if resident is logged in
+        const currentResident = JSON.parse(localStorage.getItem('currentResident') || 'null');
+        if (!currentResident) {
+            window.location.href = 'resident-login.html';
+        }
+        
+        // Update last activity
+        if (currentResident) {
+            currentResident.lastActivity = new Date().toISOString();
+            localStorage.setItem('currentResident', JSON.stringify(currentResident));
+        }
+    </script>
+
+    <!-- Floating Notification -->
+    <div id="floatingNotification" class="floating-notification hidden">
+        <!-- Notification content will be added here -->
+    </div>
+
+    <!-- Navigation -->
+    <nav class="bg-gradient-to-r from-purple-900 to-purple-800 text-white shadow-lg">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-4">
+                    <button onclick="toggleSidebar()" class="md:hidden p-2 hover:bg-white/10 rounded-lg">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                    
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-purple-600 flex items-center justify-center">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-xl font-bold">Resident Dashboard</h1>
+                            <p class="text-xs opacity-90" id="residentWelcome">Welcome back!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-4">
+                    <!-- Emergency Button -->
+                    <a href="tel:+263711391414" 
+                       class="flex items-center gap-2 px-4 py-2 bg-red-600 hover:bg-red-700 rounded-lg transition">
+                        <i class="fas fa-phone-alt"></i>
+                        <span class="hidden md:inline">Emergency Call</span>
+                    </a>
+                    
+                    <!-- Notifications -->
+                    <div class="relative" id="notificationContainer">
+                        <button onclick="toggleNotifications()" class="p-2 hover:bg-white/10 rounded-lg relative">
+                            <i class="fas fa-bell text-xl"></i>
+                            <span id="notificationCount" class="notification-badge hidden">0</span>
+                        </button>
+                        <div id="notificationDropdown" class="hidden absolute right-0 mt-2 w-80 bg-white rounded-lg shadow-xl z-50">
+                            <!-- Notifications will be loaded here -->
+                        </div>
+                    </div>
+                    
+                    <!-- Time Display -->
+                    <div class="hidden md:flex items-center gap-3">
+                        <span id="currentTime" class="text-sm"></span>
+                    </div>
+                    
+                    <!-- Logout -->
+                    <button onclick="logoutResident()" class="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 rounded-lg transition">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="hidden md:inline">Logout</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Emergency Banner -->
+    <div class="bg-gradient-to-r from-red-600 to-red-700 text-white py-2">
+        <div class="max-w-7xl mx-auto px-4">
+            <div class="flex items-center justify-center gap-2">
+                <i class="fas fa-exclamation-triangle"></i>
+                <span class="text-sm">
+                    Emergency Contacts Available:
+                    <a href="tel:+263711391414" class="font-bold ml-2">
+                        <i class="fas fa-phone mr-1"></i> Emergency Call
+                    </a>
+                    •
+                    <a href="https://wa.me/263771308790" target="_blank" class="font-bold ml-1">
+                        <i class="fab fa-whatsapp mr-1"></i> Emergency WhatsApp
+                    </a>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="max-w-7xl mx-auto p-4">
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Mobile Sidebar Overlay -->
+            <div id="mobileSidebar" class="fixed inset-0 bg-black/50 z-40 hidden lg:hidden">
+                <div class="absolute left-0 top-0 h-full w-64 bg-white shadow-xl animate-slideIn">
+                    <!-- Mobile sidebar content will be populated by JavaScript -->
+                </div>
+            </div>
+
+            <!-- Desktop Sidebar -->
+            <div class="lg:col-span-1 hidden lg:block">
+                <div class="bg-white rounded-xl shadow-lg p-6 sticky top-4">
+                    <!-- Resident Info -->
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-r from-purple-600 to-purple-800 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user text-white text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800" id="sidebarResidentName">Loading...</h3>
+                        <p class="text-sm text-slate-600" id="sidebarResidentRoom">Room: Loading...</p>
+                        <div class="mt-2">
+                            <span id="sidebarResidentStatus" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                Active
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation -->
+                    <div class="space-y-2 mb-8">
+                        <button onclick="showSection('dashboard')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item active" 
+                                id="btnDashboard">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </button>
+                        
+                        <button onclick="showSection('profile')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnProfile">
+                            <i class="fas fa-user-circle mr-3"></i>
+                            My Profile
+                        </button>
+
+                        <button onclick="showSection('payments')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnPayments">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            My Payments
+                        </button>
+                        
+                        <button onclick="showSection('issues')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnIssues">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            Report Issue
+                            <span id="issueBadge" class="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full hidden">0</span>
+                        </button>
+                        
+                        <button onclick="showSection('rules')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnRules">
+                            <i class="fas fa-file-contract mr-3"></i>
+                            House Rules
+                        </button>
+                        
+                        <button onclick="showSection('requests')" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
+                                id="btnRequests">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            Check-out Request
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="pt-6 border-t border-slate-200">
+                        <h4 class="font-bold text-slate-700 mb-3">Quick Actions</h4>
+                        <div class="space-y-2">
+                            <button onclick="showReportIssueModal()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Report New Issue
+                            </button>
+                            <button onclick="contactAdmin()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-headset mr-2"></i>
+                                Contact Admin
+                            </button>
+                            <button onclick="viewPaymentHistory()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-history mr-2"></i>
+                                Payment History
+                            </button>
+                            <button onclick="viewStayDetails()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-calendar mr-2"></i>
+                                View Stay Details
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Emergency Contacts -->
+                    <div class="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-2">Emergency Contacts</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-user text-red-600"></i>
+                                <span>Caretaker Garry</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-phone text-red-600"></i>
+                                <a href="tel:+263711391414" class="text-red-700 hover:underline">
+                                    Emergency Call
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-whatsapp text-green-600"></i>
+                                <a href="https://wa.me/263771308790" target="_blank" class="text-red-700 hover:underline">
+                                    Emergency WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Main Content -->
+            <div class="lg:col-span-3">
+                <!-- Dashboard Section -->
+                <div id="sectionDashboard" class="animate-fadeIn">
+                    <!-- Welcome Card -->
+                    <div class="bg-gradient-to-r from-purple-600 to-purple-800 text-white rounded-xl p-6 mb-6">
+                        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                            <div>
+                                <h2 class="text-2xl font-bold" id="welcomeMessage">Welcome back!</h2>
+                                <p class="opacity-90 mt-1" id="lastLoginMessage">Last login: Loading...</p>
+                            </div>
+                            <div class="flex items-center gap-4">
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold" id="residentRoomNumber">Room 0</div>
+                                    <div class="text-sm opacity-90">Your Room</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-3xl font-bold" id="monthlyRentAmount">$0</div>
+                                    <div class="text-sm opacity-90">Monthly Rent</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Stats -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                        <!-- Issues Status -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">My Issues</div>
+                                    <div class="text-3xl font-bold text-slate-800" id="myIssuesCount">0</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-amber-100 flex items-center justify-center">
+                                    <i class="fas fa-exclamation-triangle text-amber-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="issuesStatus">No issues reported</div>
+                        </div>
+                        
+                        <!-- Stay Duration -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Days Stayed</div>
+                                    <div class="text-3xl font-bold text-emerald-600" id="daysStayed">0</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <i class="fas fa-calendar-alt text-emerald-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="checkinDate">Check-in: Loading...</div>
+                        </div>
+                        
+                        <!-- Room Status -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Room Status</div>
+                                    <div class="text-3xl font-bold text-blue-600" id="roomStatus">Active</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <i class="fas fa-home text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="roomDetails">All services active</div>
+                        </div>
+
+                        <!-- Payment Status -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg" id="paymentStatusCard">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Payment Status</div>
+                                    <div class="text-3xl font-bold text-emerald-600" id="paymentStatus">Paid</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="paymentDetails">Loading...</div>
+                        </div>
+                    </div>
+
+                    <!-- Payment Summary Card -->
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-slate-800">Current Payment Status</h3>
+                            <button onclick="showSection('payments')" class="text-sm text-purple-600 hover:text-purple-700">
+                                View Details →
+                            </button>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div class="bg-emerald-50 p-6 rounded-lg">
+                                <div class="text-sm text-emerald-700">Current Month Paid</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="currentMonthPaid">$0</div>
+                                <div class="text-xs text-emerald-600 mt-2" id="currentMonth">Loading...</div>
+                            </div>
+                            
+                            <div class="bg-blue-50 p-6 rounded-lg">
+                                <div class="text-sm text-blue-700">Total Paid</div>
+                                <div class="text-2xl font-bold text-blue-900" id="totalPaid">$0</div>
+                                <div class="text-xs text-blue-600 mt-2">All-time payments</div>
+                            </div>
+                            
+                            <div class="bg-red-50 p-6 rounded-lg">
+                                <div class="text-sm text-red-700">Balance Due</div>
+                                <div class="text-2xl font-bold text-red-900" id="balanceDue">$0</div>
+                                <div class="text-xs text-red-600 mt-2">Outstanding amount</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rent Progress Bar -->
+                        <div class="mt-6">
+                            <div class="flex justify-between text-sm text-slate-600 mb-2">
+                                <span>Rent Payment Progress</span>
+                                <span id="rentProgressText">0% paid</span>
+                            </div>
+                            <div class="progress-bar">
+                                <div id="rentProgressFill" class="progress-fill bg-emerald-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-slate-500 mt-1">
+                                <span>$0</span>
+                                <span id="rentTotalAmount">$0 total</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Recent Activity -->
+                    <div class="bg-white rounded-xl shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h3 class="text-xl font-bold text-slate-800">Recent Activity</h3>
+                            <button onclick="showSection('payments')" class="text-sm text-purple-600 hover:text-purple-700">
+                                View All →
+                            </button>
+                        </div>
+                        
+                        <div class="space-y-4">
+                            <div id="recentActivity" class="text-slate-600">
+                                <!-- Activity will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Profile Section -->
+                <div id="sectionProfile" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6">My Profile</h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                            <!-- Personal Info -->
+                            <div class="lg:col-span-2">
+                                <div class="space-y-6">
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                First Name
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profileFirstName">Loading...</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Last Name
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profileLastName">Loading...</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Phone Number
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profilePhone">Loading...</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Email Address
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profileEmail">Loading...</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div>
+                                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                                            Institution
+                                        </label>
+                                        <div class="text-slate-900 font-medium" id="profileInstitution">Loading...</div>
+                                    </div>
+                                    
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                ID/Passport Number
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profileIdNumber">Loading...</div>
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Resident ID
+                                            </label>
+                                            <div class="text-slate-900 font-medium" id="profileResidentId">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Room Info -->
+                            <div>
+                                <div class="bg-purple-50 rounded-lg p-6">
+                                    <h4 class="font-bold text-purple-800 mb-4">Room Information</h4>
+                                    <div class="space-y-4">
+                                        <div>
+                                            <div class="text-sm text-slate-600">Room Number</div>
+                                            <div class="text-lg font-bold text-purple-900" id="profileRoom">Loading...</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-600">Check-in Date</div>
+                                            <div class="font-medium text-slate-900" id="profileCheckin">Loading...</div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-600">Status</div>
+                                            <div>
+                                                <span id="profileStatus" class="px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                                    Active
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-600">Stay Duration</div>
+                                            <div class="font-medium text-slate-900" id="profileStayDuration">Loading...</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Emergency Contacts -->
+                        <div class="mt-8 pt-8 border-t border-slate-200">
+                            <h4 class="font-bold text-slate-800 mb-4">Emergency Contacts</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Emergency Contact Name
+                                    </label>
+                                    <div class="text-slate-900 font-medium" id="profileEmergencyName">Loading...</div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-slate-700 mb-1">
+                                        Emergency Contact Phone
+                                    </label>
+                                    <div class="text-slate-900 font-medium" id="profileEmergencyPhone">Loading...</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Action Buttons -->
+                        <div class="mt-8 flex gap-4">
+                            <button onclick="updateProfile()" 
+                                    class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                <i class="fas fa-edit mr-2"></i>
+                                Update Information
+                            </button>
+                            <button onclick="changePassword()" 
+                                    class="px-6 py-3 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition">
+                                <i class="fas fa-key mr-2"></i>
+                                Change Password
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payments Section -->
+                <div id="sectionPayments" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">My Payments</h2>
+                            <div class="flex gap-2">
+                                <button onclick="exportPaymentHistory()" 
+                                        class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition">
+                                    <i class="fas fa-download mr-2"></i>
+                                    Export History
+                                </button>
+                                <button onclick="refreshPayments()" 
+                                        class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                                    <i class="fas fa-sync-alt mr-2"></i>
+                                    Refresh
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment Summary -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-emerald-50 p-4 rounded-lg">
+                                <div class="text-sm text-emerald-700">Monthly Rent</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="paymentMonthlyRent">$0</div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-700">Total Paid</div>
+                                <div class="text-2xl font-bold text-blue-900" id="paymentTotalPaid">$0</div>
+                            </div>
+                            <div class="bg-red-50 p-4 rounded-lg">
+                                <div class="text-sm text-red-700">Balance Due</div>
+                                <div class="text-2xl font-bold text-red-900" id="paymentBalanceDue">$0</div>
+                            </div>
+                            <div class="bg-purple-50 p-4 rounded-lg">
+                                <div class="text-sm text-purple-700">Payments Count</div>
+                                <div class="text-2xl font-bold text-purple-900" id="paymentCount">0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- Current Month Status -->
+                        <div class="mb-8 p-6 bg-purple-50 rounded-lg">
+                            <h3 class="font-bold text-purple-800 mb-4">Current Month Status</h3>
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-lg font-bold text-slate-800" id="currentMonthName">Loading...</div>
+                                    <div class="text-sm text-slate-600" id="currentMonthStatus">Loading payment status...</div>
+                                </div>
+                                <div>
+                                    <span id="currentMonthBadge" class="px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800">
+                                        Pending
+                                    </span>
+                                </div>
+                            </div>
+                            <div class="mt-4">
+                                <div class="flex justify-between text-sm text-slate-600 mb-2">
+                                    <span>Payment Progress</span>
+                                    <span id="currentMonthProgressText">0% paid</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div id="currentMonthProgressFill" class="progress-fill bg-emerald-500" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Payment History -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">Payment History</h3>
+                            <div class="overflow-x-auto">
+                                <table class="min-w-full divide-y divide-gray-200" id="paymentsTable">
+                                    <thead class="bg-gray-50">
+                                        <tr>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Amount</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Method</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">For Month</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="bg-white divide-y divide-gray-200" id="paymentsTableBody">
+                                        <!-- Payments will be loaded here -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div id="noPayments" class="text-center py-12 hidden">
+                                <i class="fas fa-money-bill-wave text-6xl text-slate-300 mb-4"></i>
+                                <h3 class="text-xl font-bold text-slate-700 mb-2">No Payment History</h3>
+                                <p class="text-slate-600">No payments have been recorded yet.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Issues Section -->
+                <div id="sectionIssues" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-2xl font-bold text-slate-800">Issue Reporting</h2>
+                            <button onclick="showReportIssueModal()" 
+                                    class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Report New Issue
+                            </button>
+                        </div>
+                        
+                        <!-- Issue Statistics -->
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+                            <div class="bg-red-50 p-4 rounded-lg">
+                                <div class="text-sm text-red-700">Open Issues</div>
+                                <div class="text-2xl font-bold text-red-900" id="openIssuesCount">0</div>
+                            </div>
+                            <div class="bg-amber-50 p-4 rounded-lg">
+                                <div class="text-sm text-amber-700">In Progress</div>
+                                <div class="text-2xl font-bold text-amber-900" id="inProgressIssuesCount">0</div>
+                            </div>
+                            <div class="bg-blue-50 p-4 rounded-lg">
+                                <div class="text-sm text-blue-700">Under Review</div>
+                                <div class="text-2xl font-bold text-blue-900" id="reviewIssuesCount">0</div>
+                            </div>
+                            <div class="bg-emerald-50 p-4 rounded-lg">
+                                <div class="text-sm text-emerald-700">Resolved</div>
+                                <div class="text-2xl font-bold text-emerald-900" id="resolvedIssuesCount">0</div>
+                            </div>
+                        </div>
+                        
+                        <!-- My Issues -->
+                        <div>
+                            <h3 class="font-bold text-slate-700 mb-4">My Reported Issues</h3>
+                            <div id="myIssuesList">
+                                <!-- Issues will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- House Rules Section -->
+                <div id="sectionRules" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6">House Rules & Policies</h2>
+                        
+                        <!-- Rules Acceptance Status -->
+                        <div class="mb-8 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-purple-800">Rules Acceptance Status</h4>
+                                    <p class="text-sm text-purple-700">Please read and accept all rules to continue your stay</p>
+                                </div>
+                                <div>
+                                    <span id="rulesStatus" class="px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800">
+                                        Not Accepted
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Rules List -->
+                        <div class="space-y-6">
+                            <!-- Security Rules -->
+                            <div class="border border-slate-200 rounded-lg p-6">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-shield-alt text-red-600"></i>
+                                    Security Rules
+                                </h3>
+                                <ul class="space-y-3 text-slate-700">
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-lock text-slate-500 mt-1"></i>
+                                        <span>Gates are locked at 8:00 PM sharp. No exceptions.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-user-slash text-slate-500 mt-1"></i>
+                                        <span>No male visitors are allowed inside the compound at any time.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-female text-slate-500 mt-1"></i>
+                                        <span>Female visitors must leave by 8:00 PM.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-dog text-slate-500 mt-1"></i>
+                                        <span>Guard dogs are released after curfew hours.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-id-card text-slate-500 mt-1"></i>
+                                        <span>All residents must carry their resident ID at all times.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Facility Rules -->
+                            <div class="border border-slate-200 rounded-lg p-6">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-home text-blue-600"></i>
+                                    Facility Rules
+                                </h3>
+                                <ul class="space-y-3 text-slate-700">
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-water text-slate-500 mt-1"></i>
+                                        <span>Water conservation is mandatory. Report leaks immediately.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-plug text-slate-500 mt-1"></i>
+                                        <span>Do not overload electrical circuits. High-power appliances are prohibited.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-trash text-slate-500 mt-1"></i>
+                                        <span>Keep common areas clean. Dispose of trash in designated bins.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-volume-mute text-slate-500 mt-1"></i>
+                                        <span>Quiet hours: 10:00 PM to 6:00 AM.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                            
+                            <!-- Emergency Procedures -->
+                            <div class="border border-slate-200 rounded-lg p-6">
+                                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
+                                    <i class="fas fa-exclamation-triangle text-amber-600"></i>
+                                    Emergency Procedures
+                                </h3>
+                                <ul class="space-y-3 text-slate-700">
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-phone text-slate-500 mt-1"></i>
+                                        <span>Emergency Call: Use the Emergency Call button available in the dashboard</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fab fa-whatsapp text-slate-500 mt-1"></i>
+                                        <span>Emergency WhatsApp: Use the Emergency WhatsApp button for immediate assistance</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-fire-extinguisher text-slate-500 mt-1"></i>
+                                        <span>Know the location of fire extinguishers and emergency exits.</span>
+                                    </li>
+                                    <li class="flex items-start gap-2">
+                                        <i class="fas fa-first-aid text-slate-500 mt-1"></i>
+                                        <span>First aid kit location: Admin office.</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        
+                        <!-- Acceptance Button -->
+                        <div class="mt-8 pt-6 border-t border-slate-200">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-bold text-slate-800">Accept House Rules</h4>
+                                    <p class="text-sm text-slate-600">By accepting, you agree to abide by all rules and policies</p>
+                                </div>
+                                <button onclick="acceptHouseRules()" 
+                                        class="px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition">
+                                    <i class="fas fa-check-circle mr-2"></i>
+                                    I Accept All Rules
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Check-out Request Section -->
+                <div id="sectionRequests" class="hidden animate-fadeIn">
+                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-6">Check-out Request</h2>
+                        
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            <!-- Request Form -->
+                            <div>
+                                <div class="space-y-6">
+                                    <div>
+                                        <h3 class="font-bold text-slate-700 mb-4">Submit Check-out Request</h3>
+                                        <p class="text-slate-600 mb-6">
+                                            Please submit your check-out request at least 7 days before your intended departure date.
+                                            All procedures will be handled by administration.
+                                        </p>
+                                    </div>
+                                    
+                                    <form id="checkoutForm" class="space-y-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Intended Check-out Date <span class="text-red-500">*</span>
+                                            </label>
+                                            <input type="date" id="checkoutDate" required min=""
+                                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                                            <p class="text-xs text-slate-500 mt-1">Must be at least 7 days from today</p>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Reason for Leaving
+                                            </label>
+                                            <select id="checkoutReason" 
+                                                    class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                                                <option value="">Select reason</option>
+                                                <option value="Studies Complete">Studies Complete</option>
+                                                <option value="Transfer to Other Hostel">Transfer to Other Hostel</option>
+                                                <option value="Returning Home">Returning Home</option>
+                                                <option value="Other">Other</option>
+                                            </select>
+                                        </div>
+                                        
+                                        <div>
+                                            <label class="block text-sm font-medium text-slate-700 mb-1">
+                                                Additional Notes (Optional)
+                                            </label>
+                                            <textarea id="checkoutNotes" rows="4"
+                                                   class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition"></textarea>
+                                        </div>
+                                        
+                                        <div class="pt-4">
+                                            <button type="submit"
+                                                    class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg transition">
+                                                <i class="fas fa-paper-plane mr-2"></i>
+                                                Submit Check-out Request
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                            
+                            <!-- Check-out Information -->
+                            <div>
+                                <div class="bg-purple-50 rounded-lg p-6">
+                                    <h3 class="font-bold text-purple-800 mb-6">Check-out Process</h3>
+                                    
+                                    <div class="space-y-6">
+                                        <div>
+                                            <h4 class="font-bold text-slate-700 mb-2">Requirements</h4>
+                                            <ul class="space-y-2 text-sm text-slate-600">
+                                                <li class="flex items-start gap-2">
+                                                    <i class="fas fa-check text-emerald-600 mt-0.5"></i>
+                                                    <span>Complete room inspection with administration</span>
+                                                </li>
+                                                <li class="flex items-start gap-2">
+                                                    <i class="fas fa-check text-emerald-600 mt-0.5"></i>
+                                                    <span>Return room keys and access cards</span>
+                                                </li>
+                                                <li class="flex items-start gap-2">
+                                                    <i class="fas fa-check text-emerald-600 mt-0.5"></i>
+                                                    <span>Clear personal belongings from room</span>
+                                                </li>
+                                                <li class="flex items-start gap-2">
+                                                    <i class="fas fa-check text-emerald-600 mt-0.5"></i>
+                                                    <span>Complete final settlement procedures</span>
+                                                </li>
+                                            </ul>
+                                        </div>
+                                        
+                                        <div>
+                                            <h4 class="font-bold text-slate-700 mb-2">Your Stay Details</h4>
+                                            <div class="space-y-3">
+                                                <div class="flex justify-between">
+                                                    <span class="text-slate-600">Current Room:</span>
+                                                    <span id="checkoutRoom" class="font-medium">Loading...</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span class="text-slate-600">Check-in Date:</span>
+                                                    <span id="checkoutCheckin" class="font-medium">Loading...</span>
+                                                </div>
+                                                <div class="flex justify-between">
+                                                    <span class="text-slate-600">Days Stayed:</span>
+                                                    <span id="checkoutDays" class="font-medium">0</span>
+                                                </div>
+                                                <div class="border-t pt-3">
+                                                    <div class="text-sm text-slate-600">
+                                                        All final settlements will be processed during check-out procedure.
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <div>
+                                            <h4 class="font-bold text-slate-700 mb-2">Timeline</h4>
+                                            <ul class="space-y-2 text-sm text-slate-600">
+                                                <li>• Request submission: Immediate</li>
+                                                <li>• Admin approval: 1-2 business days</li>
+                                                <li>• Room inspection: Day of check-out</li>
+                                                <li>• Final procedures: Day of check-out</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Previous Requests -->
+                        <div class="mt-8 pt-6 border-t border-slate-200">
+                            <h3 class="font-bold text-slate-700 mb-4">Previous Requests</h3>
+                            <div id="previousRequests">
+                                <!-- Requests will be loaded here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Issue Modal -->
+    <div id="reportIssueModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-red-600 to-red-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Report New Issue</h3>
+                    <button onclick="hideReportIssueModal()" class="text-white hover:text-red-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                <p class="text-sm opacity-90 mt-1">Report maintenance, security, or other issues</p>
+            </div>
+            
+            <div class="p-6">
+                <form id="reportIssueForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Issue Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text" id="issueTitle" required 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                               placeholder="Brief description of the issue">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Issue Type <span class="text-red-500">*</span>
+                        </label>
+                        <select id="issueType" required 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                            <option value="">Select type</option>
+                            <option value="Maintenance">Maintenance (Plumbing, Electrical, etc.)</option>
+                            <option value="Security">Security Concern</option>
+                            <option value="Cleanliness">Cleanliness Issue</option>
+                            <option value="Noise">Noise Complaint</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Location <span class="text-red-500">*</span>
+                        </label>
+                        <select id="issueLocation" required 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                            <option value="">Select location</option>
+                            <option value="My Room">My Room</option>
+                            <option value="Common Area">Common Area</option>
+                            <option value="Bathroom">Bathroom</option>
+                            <option value="Kitchen">Kitchen</option>
+                            <option value="Outside">Outside Compound</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Priority <span class="text-red-500">*</span>
+                        </label>
+                        <select id="issuePriority" required 
+                                class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition">
+                            <option value="">Select priority</option>
+                            <option value="Low">Low (Non-urgent)</option>
+                            <option value="Medium">Medium (Needs attention)</option>
+                            <option value="High">High (Urgent)</option>
+                            <option value="Emergency">Emergency (Immediate action required)</option>
+                        </select>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Detailed Description <span class="text-red-500">*</span>
+                        </label>
+                        <textarea id="issueDescription" rows="4" required
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
+                               placeholder="Please provide as much detail as possible..."></textarea>
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-paper-plane mr-2"></i>
+                            Submit Issue Report
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="issueReportMessage" class="mt-4 p-3 rounded-lg hidden">
+                    <div class="flex items-center gap-2">
+                        <i class="fas mr-2"></i>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Update Profile Modal -->
+    <div id="updateProfileModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-purple-600 to-purple-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Update Profile</h3>
+                    <button onclick="hideUpdateProfileModal()" class="text-white hover:text-purple-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <form id="updateProfileForm" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Email Address
+                        </label>
+                        <input type="email" id="updateEmail" 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Emergency Contact Name
+                        </label>
+                        <input type="text" id="updateEmergencyName" 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700 mb-1">
+                            Emergency Contact Phone
+                        </label>
+                        <input type="tel" id="updateEmergencyPhone" 
+                               class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition">
+                    </div>
+                    
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full bg-gradient-to-r from-purple-600 to-purple-700 hover:from-purple-700 hover:to-purple-800 text-white font-semibold py-3 rounded-lg transition">
+                            <i class="fas fa-save mr-2"></i>
+                            Update Information
+                        </button>
+                    </div>
+                </form>
+                
+                <div id="updateProfileMessage" class="mt-4 p-3 rounded-lg hidden">
+                    <div class="flex items-center gap-2">
+                        <i class="fas mr-2"></i>
+                        <span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Receipt Download Modal -->
+    <div id="receiptModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Payment Receipt</h3>
+                    <button onclick="hideReceiptModal()" class="text-white hover:text-emerald-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div id="receiptContent" class="space-y-4">
+                    <!-- Receipt content will be loaded here -->
+                </div>
+                
+                <div class="mt-6 pt-6 border-t border-slate-200">
+                    <button onclick="downloadReceipt()" 
+                            class="w-full bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-700 hover:to-emerald-800 text-white font-semibold py-3 rounded-lg transition">
+                        <i class="fas fa-download mr-2"></i>
+                        Download Receipt (PDF)
+                    </button>
+                    <p class="text-xs text-slate-500 text-center mt-3">
+                        Receipt will be downloaded as a PDF file
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Alert Modal -->
+    <div id="paymentAlertModal" class="fixed inset-0 bg-black/70 flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fadeIn">
+            <div class="bg-gradient-to-r from-emerald-600 to-emerald-700 text-white p-6 rounded-t-2xl">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-bold">Payment Update!</h3>
+                    <button onclick="hidePaymentAlertModal()" class="text-white hover:text-emerald-200">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-money-bill-wave text-emerald-600 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-slate-800 mb-2" id="paymentAlertTitle">Payment Recorded</h4>
+                    <p class="text-slate-600" id="paymentAlertMessage">Your payment has been recorded by the admin.</p>
+                </div>
+                
+                <div class="bg-emerald-50 p-4 rounded-lg mb-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <div class="text-sm text-emerald-700">Amount Paid</div>
+                            <div class="text-2xl font-bold text-emerald-900" id="paymentAlertAmount">$0</div>
+                        </div>
+                        <div>
+                            <div class="text-sm text-emerald-700">For Month</div>
+                            <div class="text-lg font-bold text-emerald-900" id="paymentAlertMonth">January</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-3">
+                    <button onclick="hidePaymentAlertModal()" 
+                            class="flex-1 px-4 py-2 bg-slate-200 text-slate-800 rounded-lg hover:bg-slate-300 transition">
+                        Dismiss
+                    </button>
+                    <button onclick="showSection('payments')" 
+                            class="flex-1 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
+                        View Payments
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Enhanced Dashboard with Real-time Payment Updates
+        let currentResident = null;
+        let currentSection = 'dashboard';
+        let currentReceipt = null;
+        let lastPaymentCheck = null;
+        let paymentCheckInterval = null;
+        
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log("Dashboard initialized");
+            loadResidentData();
+            setupEventListeners();
+            updateCurrentTime();
+            setInterval(updateCurrentTime, 60000);
+            
+            // Start payment monitoring
+            startPaymentMonitoring();
+            
+            // Auto-refresh dashboard every 30 seconds
+            setInterval(() => {
+                if (currentSection === 'dashboard' || currentSection === 'payments') {
+                    loadResidentData();
+                }
+            }, 30000);
+            
+            // Close dropdowns when clicking outside
+            setupClickOutsideListeners();
+        });
+        
+        // Setup all event listeners
+        function setupEventListeners() {
+            console.log("Setting up event listeners");
+            
+            // Issue report form
+            const reportIssueForm = document.getElementById('reportIssueForm');
+            if (reportIssueForm) {
+                reportIssueForm.addEventListener('submit', handleIssueReport);
+            }
+            
+            // Checkout form
+            const checkoutForm = document.getElementById('checkoutForm');
+            if (checkoutForm) {
+                checkoutForm.addEventListener('submit', handleCheckoutRequest);
+            }
+            
+            // Profile update form
+            const updateProfileForm = document.getElementById('updateProfileForm');
+            if (updateProfileForm) {
+                updateProfileForm.addEventListener('submit', handleProfileUpdate);
+            }
+            
+            // Nav button click handlers
+            setupNavButtonListeners();
+        }
+        
+        function setupNavButtonListeners() {
+            const navButtons = document.querySelectorAll('.sidebar-item');
+            navButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    const section = this.id.replace('btn', '').toLowerCase();
+                    showSection(section);
+                });
+            });
+        }
+        
+        function setupClickOutsideListeners() {
+            document.addEventListener('click', function(event) {
+                // Notifications dropdown
+                const notificationContainer = document.getElementById('notificationContainer');
+                if (notificationContainer && !notificationContainer.contains(event.target)) {
+                    document.getElementById('notificationDropdown').classList.add('hidden');
+                }
+                
+                // Mobile sidebar
+                const mobileSidebar = document.getElementById('mobileSidebar');
+                if (mobileSidebar && !mobileSidebar.contains(event.target) && !event.target.closest('[onclick="toggleSidebar()"]')) {
+                    mobileSidebar.classList.add('hidden');
+                }
+                
+                // Modals
+                const modals = ['reportIssueModal', 'updateProfileModal', 'receiptModal', 'paymentAlertModal'];
+                modals.forEach(modalId => {
+                    const modal = document.getElementById(modalId);
+                    if (modal && !modal.contains(event.target) && !modal.classList.contains('hidden')) {
+                        if (modalId === 'reportIssueModal') hideReportIssueModal();
+                        if (modalId === 'updateProfileModal') hideUpdateProfileModal();
+                        if (modalId === 'receiptModal') hideReceiptModal();
+                        if (modalId === 'paymentAlertModal') hidePaymentAlertModal();
+                    }
+                });
+            });
+        }
+        
+        // Load resident data
+        function loadResidentData() {
+            try {
+                const sessionData = JSON.parse(localStorage.getItem('currentResident'));
+                if (!sessionData) {
+                    window.location.href = 'resident-login.html';
+                    return;
+                }
+                
+                currentResident = sessionData;
+                
+                // Load full resident data
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentData = residents.find(r => r.id === sessionData.id);
+                
+                if (!residentData) {
+                    alert('Resident data not found. Please login again.');
+                    logoutResident();
+                    return;
+                }
+                
+                // Update UI with resident data
+                updateResidentUI(residentData);
+                updateDashboardStats(residentData);
+                loadPaymentSummary(residentData);
+                loadMyIssuesStats();
+                loadRecentActivity();
+                
+                // Check for new payments
+                checkForNewPayments();
+                
+            } catch (e) {
+                console.error('Error loading resident data:', e);
+                window.location.href = 'resident-login.html';
+            }
+        }
+        
+        // Update UI with resident data
+        function updateResidentUI(resident) {
+            console.log("Updating resident UI:", resident.fullName);
+            
+            // Update welcome messages
+            document.getElementById('residentWelcome').textContent = `Welcome, ${resident.firstName}!`;
+            document.getElementById('welcomeMessage').textContent = `Welcome back, ${resident.firstName}!`;
+            document.getElementById('sidebarResidentName').textContent = resident.fullName;
+            document.getElementById('sidebarResidentRoom').textContent = `Room: ${resident.roomAssigned || 'Not assigned'}`;
+            document.getElementById('residentRoomNumber').textContent = resident.roomAssigned || 'Not assigned';
+            document.getElementById('checkoutRoom').textContent = resident.roomAssigned || 'Not assigned';
+            document.getElementById('monthlyRentAmount').textContent = `$${parseFloat(resident.monthlyRent || 0).toFixed(2)}`;
+            document.getElementById('paymentMonthlyRent').textContent = `$${parseFloat(resident.monthlyRent || 0).toFixed(2)}`;
+            
+            // Update last login
+            const lastLogin = new Date(currentResident.loginTime);
+            document.getElementById('lastLoginMessage').textContent = `Last login: ${lastLogin.toLocaleString()}`;
+            
+            // Update profile section
+            document.getElementById('profileFirstName').textContent = resident.firstName;
+            document.getElementById('profileLastName').textContent = resident.lastName;
+            document.getElementById('profilePhone').textContent = resident.phone;
+            document.getElementById('profileEmail').textContent = resident.email || 'Not provided';
+            document.getElementById('profileInstitution').textContent = resident.institution;
+            document.getElementById('profileIdNumber').textContent = resident.idNumber;
+            document.getElementById('profileResidentId').textContent = resident.id;
+            document.getElementById('profileRoom').textContent = resident.roomAssigned || 'Not assigned';
+            document.getElementById('profileCheckin').textContent = resident.checkinDate ? new Date(resident.checkinDate).toLocaleDateString() : 'Not available';
+            document.getElementById('profileEmergencyName').textContent = resident.emergencyName;
+            document.getElementById('profileEmergencyPhone').textContent = resident.emergencyPhone;
+            
+            // Calculate and update stay duration
+            if (resident.checkinDate) {
+                const checkinDate = new Date(resident.checkinDate);
+                const today = new Date();
+                const daysStayed = Math.floor((today - checkinDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('profileStayDuration').textContent = `${daysStayed} days`;
+                document.getElementById('checkoutDays').textContent = daysStayed;
+                document.getElementById('checkoutCheckin').textContent = new Date(resident.checkinDate).toLocaleDateString();
+                document.getElementById('daysStayed').textContent = daysStayed;
+                document.getElementById('checkinDate').textContent = `Check-in: ${checkinDate.toLocaleDateString()}`;
+            }
+            
+            // Update status indicators
+            updateStatusIndicators(resident);
+            
+            // Update check-out section
+            document.getElementById('checkoutDate').min = getMinCheckoutDate();
+        }
+        
+        function updateStatusIndicators(resident) {
+            const statusSpan = document.getElementById('profileStatus');
+            if (resident.status === 'active') {
+                statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
+                statusSpan.textContent = 'Active';
+                document.getElementById('roomStatus').textContent = 'Active';
+                document.getElementById('roomDetails').textContent = 'All services active';
+                document.getElementById('sidebarResidentStatus').className = 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
+                document.getElementById('sidebarResidentStatus').textContent = 'Active';
+            } else if (resident.status === 'inactive') {
+                statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800';
+                statusSpan.textContent = 'Inactive';
+                document.getElementById('roomStatus').textContent = 'Inactive';
+                document.getElementById('roomDetails').textContent = 'Contact administration';
+                document.getElementById('sidebarResidentStatus').className = 'px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800';
+                document.getElementById('sidebarResidentStatus').textContent = 'Inactive';
+            } else {
+                statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800';
+                statusSpan.textContent = resident.status;
+                document.getElementById('roomStatus').textContent = resident.status;
+                document.getElementById('roomDetails').textContent = 'Pending update';
+                document.getElementById('sidebarResidentStatus').className = 'px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800';
+                document.getElementById('sidebarResidentStatus').textContent = resident.status;
+            }
+        }
+        
+        // Load payment summary with admin integration
+        function loadPaymentSummary(resident) {
+            try {
+                // Get resident's payments from localStorage
+                // First check if payments are stored under resident-specific key
+                let payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+                
+                // Also check general payments array for compatibility
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === resident.id);
+                
+                // Combine both sources (remove duplicates)
+                const combinedPayments = [...payments, ...residentPayments];
+                const uniquePayments = Array.from(new Map(combinedPayments.map(p => [p.id, p])).values());
+                
+                // Calculate totals
+                let totalPaid = 0;
+                let currentMonthPaid = 0;
+                const currentMonth = new Date().getMonth();
+                const currentYear = new Date().getFullYear();
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                                  'July', 'August', 'September', 'October', 'November', 'December'];
+                
+                uniquePayments.forEach(payment => {
+                    const paymentAmount = parseFloat(payment.amount) || 0;
+                    totalPaid += paymentAmount;
+                    
+                    // Check if payment is for current month
+                    const paymentDate = new Date(payment.date || payment.paymentDate);
+                    if (paymentDate.getMonth() === currentMonth && paymentDate.getFullYear() === currentYear) {
+                        currentMonthPaid += paymentAmount;
+                    }
+                });
+                
+                const monthlyRent = parseFloat(resident.monthlyRent || 0);
+                const balanceDue = Math.max(0, monthlyRent - currentMonthPaid);
+                const progressPercent = monthlyRent > 0 ? Math.min(100, (currentMonthPaid / monthlyRent) * 100) : 0;
+                
+                // Update dashboard elements
+                document.getElementById('currentMonthPaid').textContent = `$${currentMonthPaid.toFixed(2)}`;
+                document.getElementById('totalPaid').textContent = `$${totalPaid.toFixed(2)}`;
+                document.getElementById('balanceDue').textContent = `$${balanceDue.toFixed(2)}`;
+                document.getElementById('rentTotalAmount').textContent = `$${monthlyRent.toFixed(2)} total`;
+                
+                // Update payment status
+                const paymentStatus = document.getElementById('paymentStatus');
+                const paymentDetails = document.getElementById('paymentDetails');
+                const paymentStatusCard = document.getElementById('paymentStatusCard');
+                
+                if (currentMonthPaid >= monthlyRent) {
+                    paymentStatus.textContent = 'Paid';
+                    paymentStatus.className = 'text-3xl font-bold text-emerald-600';
+                    paymentDetails.textContent = 'Rent fully paid for current month';
+                    paymentStatusCard.classList.remove('animate-pulse');
+                } else if (currentMonthPaid > 0) {
+                    paymentStatus.textContent = 'Partial';
+                    paymentStatus.className = 'text-3xl font-bold text-amber-600';
+                    paymentDetails.textContent = `$${balanceDue.toFixed(2)} remaining`;
+                    paymentStatusCard.classList.add('animate-pulse');
+                } else {
+                    paymentStatus.textContent = 'Due';
+                    paymentStatus.className = 'text-3xl font-bold text-red-600';
+                    paymentDetails.textContent = `$${monthlyRent.toFixed(2)} due`;
+                    paymentStatusCard.classList.add('animate-pulse');
+                }
+                
+                // Update progress bar
+                document.getElementById('rentProgressFill').style.width = `${progressPercent}%`;
+                document.getElementById('rentProgressText').textContent = `${progressPercent.toFixed(0)}% paid`;
+                
+                // Update current month info
+                document.getElementById('currentMonth').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                document.getElementById('currentMonthName').textContent = `${monthNames[currentMonth]} ${currentYear}`;
+                document.getElementById('currentMonthProgressText').textContent = 
+                    `${progressPercent.toFixed(0)}% paid ($${currentMonthPaid.toFixed(2)} of $${monthlyRent.toFixed(2)})`;
+                document.getElementById('currentMonthProgressFill').style.width = `${progressPercent}%`;
+                
+                // Update current month badge
+                const currentMonthBadge = document.getElementById('currentMonthBadge');
+                const currentMonthStatus = document.getElementById('currentMonthStatus');
+                
+                if (currentMonthPaid >= monthlyRent) {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-800';
+                    currentMonthBadge.textContent = 'Paid';
+                    currentMonthStatus.textContent = 'Rent fully paid for this month';
+                } else if (currentMonthPaid > 0) {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800';
+                    currentMonthBadge.textContent = 'Partial';
+                    currentMonthStatus.textContent = `$${balanceDue.toFixed(2)} remaining for this month`;
+                } else {
+                    currentMonthBadge.className = 'px-3 py-1 text-sm font-medium rounded-full bg-red-100 text-red-800';
+                    currentMonthBadge.textContent = 'Due';
+                    currentMonthStatus.textContent = `$${monthlyRent.toFixed(2)} due for this month`;
+                }
+                
+                // Update payment summary in payments section
+                document.getElementById('paymentTotalPaid').textContent = `$${totalPaid.toFixed(2)}`;
+                document.getElementById('paymentBalanceDue').textContent = `$${balanceDue.toFixed(2)}`;
+                document.getElementById('paymentCount').textContent = uniquePayments.length;
+                
+                // Store for later comparison
+                lastPaymentCheck = {
+                    count: uniquePayments.length,
+                    total: totalPaid,
+                    timestamp: new Date().toISOString()
+                };
+                
+            } catch (e) {
+                console.error('Error loading payment summary:', e);
+            }
+        }
+        
+        // Real-time payment monitoring
+        function startPaymentMonitoring() {
+            // Check for new payments every 10 seconds
+            paymentCheckInterval = setInterval(checkForNewPayments, 10000);
+        }
+        
+        function checkForNewPayments() {
+            if (!currentResident) return;
+            
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const resident = residents.find(r => r.id === currentResident.id);
+            if (!resident) return;
+            
+            // Get current payments
+            let payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
+            const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+            const residentPayments = allPayments.filter(p => p.residentId === resident.id);
+            const combinedPayments = [...payments, ...residentPayments];
+            const uniquePayments = Array.from(new Map(combinedPayments.map(p => [p.id, p])).values());
+            
+            // Compare with last check
+            if (lastPaymentCheck && uniquePayments.length > lastPaymentCheck.count) {
+                const newPayments = uniquePayments.slice(lastPaymentCheck.count);
+                if (newPayments.length > 0) {
+                    showNewPaymentNotification(newPayments[0]);
+                    loadResidentData(); // Refresh all data
+                }
+            }
+            
+            lastPaymentCheck = {
+                count: uniquePayments.length,
+                total: uniquePayments.reduce((sum, p) => sum + (parseFloat(p.amount) || 0), 0),
+                timestamp: new Date().toISOString()
+            };
+        }
+        
+        function showNewPaymentNotification(payment) {
+            const notification = document.getElementById('floatingNotification');
+            const amount = parseFloat(payment.amount || 0).toFixed(2);
+            const date = new Date(payment.date || payment.paymentDate).toLocaleDateString();
+            
+            notification.innerHTML = `
+                <div class="bg-emerald-600 text-white p-4 rounded-lg shadow-lg max-w-sm">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full bg-emerald-500 flex items-center justify-center">
+                            <i class="fas fa-money-bill-wave"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-bold">Payment Recorded!</h4>
+                            <p class="text-sm opacity-90">$${amount} paid on ${date}</p>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-auto">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            notification.classList.remove('hidden');
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+        
+        // Load my issues statistics
+        function loadMyIssuesStats() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
+                
+                // Update counts
+                const openIssues = myIssues.filter(i => i.status === 'open').length;
+                const inProgressIssues = myIssues.filter(i => i.status === 'in-progress').length;
+                const reviewIssues = myIssues.filter(i => i.status === 'under-review').length;
+                const resolvedIssues = myIssues.filter(i => i.status === 'resolved').length;
+                
+                document.getElementById('myIssuesCount').textContent = myIssues.length;
+                document.getElementById('openIssuesCount').textContent = openIssues;
+                document.getElementById('inProgressIssuesCount').textContent = inProgressIssues;
+                document.getElementById('reviewIssuesCount').textContent = reviewIssues;
+                document.getElementById('resolvedIssuesCount').textContent = resolvedIssues;
+                
+                // Update issues status text
+                if (myIssues.length === 0) {
+                    document.getElementById('issuesStatus').textContent = 'No issues reported';
+                } else if (openIssues > 0) {
+                    document.getElementById('issuesStatus').textContent = `${openIssues} open issue(s)`;
+                } else {
+                    document.getElementById('issuesStatus').textContent = 'All issues resolved';
+                }
+                
+                // Update notification badge
+                const issueBadge = document.getElementById('issueBadge');
+                const notificationCount = document.getElementById('notificationCount');
+                
+                if (openIssues > 0) {
+                    issueBadge.textContent = openIssues;
+                    issueBadge.classList.remove('hidden');
+                    notificationCount.textContent = openIssues;
+                    notificationCount.classList.remove('hidden');
+                } else {
+                    issueBadge.classList.add('hidden');
+                    notificationCount.classList.add('hidden');
+                }
+                
+            } catch (e) {
+                console.error('Error loading issues stats:', e);
+            }
+        }
+        
+        // Load recent activity
+        function loadRecentActivity() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                
+                // Get payments from both storage locations
+                let payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === currentResident.id);
+                const combinedPayments = [...payments, ...residentPayments];
+                const uniquePayments = Array.from(new Map(combinedPayments.map(p => [p.id, p])).values());
+                
+                const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
+                
+                let activities = [];
+                
+                // Add recent payments
+                uniquePayments.slice(-3).reverse().forEach(payment => {
+                    activities.push({
+                        type: 'payment',
+                        text: `Payment: $${parseFloat(payment.amount).toFixed(2)}`,
+                        status: 'paid',
+                        time: payment.date || payment.paymentDate,
+                        icon: 'fas fa-money-bill-wave'
+                    });
+                });
+                
+                // Add recent issues
+                myIssues.slice(-3).reverse().forEach(issue => {
+                    activities.push({
+                        type: 'issue',
+                        text: `Issue: ${issue.title}`,
+                        status: issue.status,
+                        time: issue.reportedAt,
+                        icon: 'fas fa-exclamation-triangle'
+                    });
+                });
+                
+                // Add system notifications
+                if (activities.length === 0) {
+                    activities.push({
+                        type: 'info',
+                        text: 'No recent activity',
+                        status: 'active',
+                        time: new Date().toISOString(),
+                        icon: 'fas fa-info-circle'
+                    });
+                }
+                
+                // Sort by time and display
+                activities.sort((a, b) => new Date(b.time) - new Date(a.time));
+                activities = activities.slice(0, 5);
+                
+                const activityHtml = activities.map(activity => `
+                    <div class="flex items-center gap-3 p-3 hover:bg-slate-50 rounded-lg">
+                        <div class="w-10 h-10 rounded-full 
+                            ${activity.type === 'payment' ? 'bg-emerald-100' : 
+                              activity.type === 'issue' ? 'bg-red-100' : 
+                              'bg-blue-100'} 
+                            flex items-center justify-center">
+                            <i class="${activity.icon} 
+                                ${activity.type === 'payment' ? 'text-emerald-600' : 
+                                  activity.type === 'issue' ? 'text-red-600' : 
+                                  'text-blue-600'}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-sm font-medium text-slate-800">${activity.text}</div>
+                            <div class="flex items-center gap-2 mt-1">
+                                <span class="text-xs text-slate-500">${new Date(activity.time).toLocaleDateString()}</span>
+                                <span class="text-xs px-2 py-1 rounded-full
+                                    ${activity.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
+                                      activity.status === 'open' ? 'bg-red-100 text-red-800' :
+                                      activity.status === 'in-progress' ? 'bg-amber-100 text-amber-800' :
+                                      activity.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
+                                      'bg-blue-100 text-blue-800'}">
+                                    ${activity.status}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+                
+                document.getElementById('recentActivity').innerHTML = activityHtml || '<div class="text-slate-500 text-center py-4">No recent activity</div>';
+                
+            } catch (e) {
+                console.error('Error loading activity:', e);
+            }
+        }
+        
+        // Show/hide sections
+        function showSection(sectionId) {
+            console.log("Showing section:", sectionId);
+            
+            // Hide all sections
+            document.querySelectorAll('[id^="section"]').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // Remove active class from all buttons
+            document.querySelectorAll('.sidebar-item').forEach(el => {
+                el.classList.remove('active');
+            });
+            
+            // Show selected section
+            const sectionElement = document.getElementById(`section${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}`);
+            if (sectionElement) {
+                sectionElement.classList.remove('hidden');
+                sectionElement.classList.add('animate-fadeIn');
+            }
+            
+            // Add active class to clicked button
+            const buttonId = `btn${sectionId.charAt(0).toUpperCase() + sectionId.slice(1)}`;
+            const button = document.getElementById(buttonId);
+            if (button) button.classList.add('active');
+            
+            // Update current section
+            currentSection = sectionId;
+            
+            // Load section data
+            loadSectionData(sectionId);
+        }
+        
+        // Load section data
+        function loadSectionData(sectionId) {
+            switch(sectionId) {
+                case 'dashboard':
+                    loadDashboard();
+                    break;
+                case 'profile':
+                    loadProfile();
+                    break;
+                case 'payments':
+                    loadPayments();
+                    break;
+                case 'issues':
+                    loadIssues();
+                    break;
+                case 'rules':
+                    loadRules();
+                    break;
+                case 'requests':
+                    loadCheckoutRequests();
+                    break;
+            }
+        }
+        
+        // Load payments data
+        function loadPayments() {
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentData = residents.find(r => r.id === currentResident.id);
+                
+                if (!residentData) return;
+                
+                // Get payments from both storage locations
+                let payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === currentResident.id);
+                const combinedPayments = [...payments, ...residentPayments];
+                const uniquePayments = Array.from(new Map(combinedPayments.map(p => [p.id, p])).values());
+                
+                // Update payment table
+                const tbody = document.getElementById('paymentsTableBody');
+                const noPaymentsDiv = document.getElementById('noPayments');
+                
+                if (uniquePayments.length === 0) {
+                    tbody.innerHTML = '';
+                    noPaymentsDiv.classList.remove('hidden');
+                    return;
+                }
+                
+                noPaymentsDiv.classList.add('hidden');
+                
+                // Sort payments by date (newest first)
+                uniquePayments.sort((a, b) => new Date(b.date || b.paymentDate) - new Date(a.date || a.paymentDate));
+                
+                tbody.innerHTML = uniquePayments.map(payment => {
+                    const paymentDate = new Date(payment.date || payment.paymentDate);
+                    const formattedDate = paymentDate.toLocaleDateString();
+                    const amount = parseFloat(payment.amount).toFixed(2);
+                    const method = payment.method || payment.paymentMethod || 'Cash';
+                    const month = payment.month || payment.forMonth || 'N/A';
+                    const recordedBy = payment.recordedBy || payment.adminName || 'Admin';
+                    
+                    return `
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                ${formattedDate}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900 font-bold">
+                                $${amount}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${method}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                ${month}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
+                                    Paid
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button onclick="viewReceipt('${payment.id}')" 
+                                        class="text-blue-600 hover:text-blue-900 mr-3">
+                                    <i class="fas fa-eye"></i> View
+                                </button>
+                                <button onclick="downloadReceiptPdf('${payment.id}')" 
+                                        class="text-emerald-600 hover:text-emerald-900">
+                                    <i class="fas fa-download"></i> Download
+                                </button>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading payments:', e);
+            }
+        }
+        
+        // Load issues data
+        function loadIssues() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
+                
+                const container = document.getElementById('myIssuesList');
+                
+                if (myIssues.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <i class="fas fa-check-circle text-4xl text-green-500 mb-4"></i>
+                            <h3 class="text-lg font-semibold text-slate-700">No Issues Reported</h3>
+                            <p class="text-slate-600 mt-2">Click "Report New Issue" to report maintenance or other issues.</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                myIssues.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
+                
+                container.innerHTML = myIssues.map(issue => {
+                    const statusClass = issue.status === 'open' ? 'bg-red-100 text-red-800' :
+                                      issue.status === 'in-progress' ? 'bg-amber-100 text-amber-800' :
+                                      issue.status === 'under-review' ? 'bg-blue-100 text-blue-800' :
+                                      'bg-emerald-100 text-emerald-800';
+                    
+                    return `
+                        <div class="border border-slate-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                                            ${issue.status}
+                                        </span>
+                                        <span class="text-xs text-slate-500">
+                                            ${new Date(issue.reportedAt).toLocaleDateString()}
+                                        </span>
+                                        <span class="text-xs text-slate-500">
+                                            Priority: ${issue.priority}
+                                        </span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-800">${issue.title}</h4>
+                                    <div class="flex items-center gap-2 mt-1 text-sm text-slate-600">
+                                        <span>Type: ${issue.type}</span>
+                                        <span>•</span>
+                                        <span>Location: ${issue.location}</span>
+                                    </div>
+                                    <p class="text-slate-600 text-sm mt-2">${issue.description}</p>
+                                    
+                                    ${issue.adminResponse ? `
+                                        <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <div class="text-sm font-medium text-blue-800 mb-1">Admin Response:</div>
+                                            <div class="text-sm text-blue-700">${issue.adminResponse}</div>
+                                            <div class="text-xs text-blue-600 mt-1">
+                                                ${issue.respondedAt ? `Responded: ${new Date(issue.respondedAt).toLocaleDateString()}` : ''}
+                                            </div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading issues:', e);
+            }
+        }
+        
+        // Load house rules
+        function loadRules() {
+            // Check if rules have been accepted
+            const acceptedRules = localStorage.getItem(`rulesAccepted_${currentResident.id}`);
+            const rulesStatus = document.getElementById('rulesStatus');
+            
+            if (acceptedRules) {
+                rulesStatus.className = 'px-3 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-800';
+                rulesStatus.textContent = 'Accepted';
+            } else {
+                rulesStatus.className = 'px-3 py-1 text-sm font-medium rounded-full bg-amber-100 text-amber-800';
+                rulesStatus.textContent = 'Not Accepted';
+            }
+        }
+        
+        // Load checkout requests
+        function loadCheckoutRequests() {
+            try {
+                const requests = JSON.parse(localStorage.getItem(`checkoutRequests_${currentResident.id}`) || '[]');
+                const container = document.getElementById('previousRequests');
+                
+                if (requests.length === 0) {
+                    container.innerHTML = `
+                        <div class="text-center py-8">
+                            <p class="text-slate-600">No previous check-out requests</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort by date (newest first)
+                requests.sort((a, b) => new Date(b.requestedAt) - new Date(a.requestedAt));
+                
+                container.innerHTML = requests.map(request => {
+                    const statusClass = request.status === 'approved' ? 'bg-emerald-100 text-emerald-800' :
+                                      request.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                                      'bg-amber-100 text-amber-800';
+                    
+                    return `
+                        <div class="border border-slate-200 rounded-lg p-4 mb-4">
+                            <div class="flex items-start justify-between">
+                                <div class="flex-1">
+                                    <div class="flex items-center gap-2 mb-2">
+                                        <span class="px-2 py-1 text-xs font-medium rounded-full ${statusClass}">
+                                            ${request.status}
+                                        </span>
+                                        <span class="text-xs text-slate-500">
+                                            Requested: ${new Date(request.requestedAt).toLocaleDateString()}
+                                        </span>
+                                    </div>
+                                    <h4 class="font-bold text-slate-800">Check-out Request</h4>
+                                    <div class="flex items-center gap-2 mt-1 text-sm text-slate-600">
+                                        <span>Intended Date: ${new Date(request.checkoutDate).toLocaleDateString()}</span>
+                                        <span>•</span>
+                                        <span>Reason: ${request.reason || 'Not specified'}</span>
+                                    </div>
+                                    ${request.notes ? `<p class="text-slate-600 text-sm mt-2">${request.notes}</p>` : ''}
+                                    
+                                    ${request.adminResponse ? `
+                                        <div class="mt-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                            <div class="text-sm font-medium text-blue-800 mb-1">Admin Response:</div>
+                                            <div class="text-sm text-blue-700">${request.adminResponse}</div>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+                
+            } catch (e) {
+                console.error('Error loading checkout requests:', e);
+            }
+        }
+        
+        // Handle issue report form
+        function handleIssueReport(e) {
+            e.preventDefault();
+            
+            const issue = {
+                id: 'ISSUE-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                title: document.getElementById('issueTitle').value,
+                type: document.getElementById('issueType').value,
+                location: document.getElementById('issueLocation').value,
+                priority: document.getElementById('issuePriority').value,
+                description: document.getElementById('issueDescription').value,
+                reportedBy: currentResident.id,
+                reportedByName: currentResident.fullName,
+                reportedAt: new Date().toISOString(),
+                status: 'open',
+                room: currentResident.room || 'Not specified',
+                adminResponse: null,
+                respondedAt: null,
+                resolvedAt: null
+            };
+            
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                issues.push(issue);
+                localStorage.setItem('reportedIssues', JSON.stringify(issues));
+                
+                // Show success message
+                showNotification('Issue reported successfully! Admin has been notified.', 'success');
+                
+                // Reset form and close modal after delay
+                setTimeout(() => {
+                    hideReportIssueModal();
+                    
+                    // Refresh issues section if it's active
+                    if (currentSection === 'issues') {
+                        loadIssues();
+                    }
+                    
+                    // Update dashboard stats
+                    loadMyIssuesStats();
+                    loadRecentActivity();
+                    
+                }, 2000);
+                
+            } catch (e) {
+                console.error('Error saving issue:', e);
+                showNotification('Error reporting issue. Please try again.', 'error');
+            }
+        }
+        
+        // Handle checkout form
+        function handleCheckoutRequest(e) {
+            e.preventDefault();
+            
+            const checkoutDate = document.getElementById('checkoutDate').value;
+            const reason = document.getElementById('checkoutReason').value;
+            const notes = document.getElementById('checkoutNotes').value;
+            
+            // Validate date (must be at least 7 days from now)
+            const today = new Date();
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() + 7);
+            
+            if (new Date(checkoutDate) < minDate) {
+                showNotification('Check-out date must be at least 7 days from today.', 'error');
+                return;
+            }
+            
+            const request = {
+                id: 'CHECKOUT-' + Date.now(),
+                residentId: currentResident.id,
+                residentName: currentResident.fullName,
+                checkoutDate: checkoutDate,
+                reason: reason,
+                notes: notes,
+                requestedAt: new Date().toISOString(),
+                status: 'pending',
+                adminResponse: null,
+                respondedAt: null
+            };
+            
+            try {
+                const requests = JSON.parse(localStorage.getItem(`checkoutRequests_${currentResident.id}`) || '[]');
+                requests.push(request);
+                localStorage.setItem(`checkoutRequests_${currentResident.id}`, JSON.stringify(requests));
+                
+                // Show success message
+                showNotification('Check-out request submitted successfully! Admin will review your request and respond within 1-2 business days.', 'success');
+                
+                // Reset form
+                e.target.reset();
+                document.getElementById('checkoutDate').min = getMinCheckoutDate();
+                
+                // Refresh requests section
+                loadCheckoutRequests();
+                
+            } catch (e) {
+                console.error('Error saving checkout request:', e);
+                showNotification('Error submitting request. Please try again.', 'error');
+            }
+        }
+        
+        // Handle profile update form
+        function handleProfileUpdate(e) {
+            e.preventDefault();
+            
+            const email = document.getElementById('updateEmail').value;
+            const emergencyName = document.getElementById('updateEmergencyName').value;
+            const emergencyPhone = document.getElementById('updateEmergencyPhone').value;
+            
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentIndex = residents.findIndex(r => r.id === currentResident.id);
+                
+                if (residentIndex === -1) return;
+                
+                // Update resident data
+                if (email) residents[residentIndex].email = email;
+                if (emergencyName) residents[residentIndex].emergencyName = emergencyName;
+                if (emergencyPhone) residents[residentIndex].emergencyPhone = emergencyPhone;
+                
+                localStorage.setItem('approvedResidents', JSON.stringify(residents));
+                
+                // Show success message
+                showNotification('Profile updated successfully!', 'success');
+                
+                // Update UI
+                setTimeout(() => {
+                    hideUpdateProfileModal();
+                    loadResidentData(); // Reload data
+                }, 2000);
+                
+            } catch (e) {
+                console.error('Error updating profile:', e);
+                showNotification('Error updating profile. Please try again.', 'error');
+            }
+        }
+        
+        // Utility functions
+        function showNotification(message, type = 'info') {
+            const types = {
+                success: { bg: 'bg-emerald-600', icon: 'fa-check-circle' },
+                error: { bg: 'bg-red-600', icon: 'fa-exclamation-circle' },
+                info: { bg: 'bg-blue-600', icon: 'fa-info-circle' }
+            };
+            
+            const notification = document.getElementById('floatingNotification');
+            notification.innerHTML = `
+                <div class="${types[type].bg} text-white p-4 rounded-lg shadow-lg max-w-sm animate-fadeIn">
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 rounded-full ${types[type].bg.replace('600', '500')} flex items-center justify-center">
+                            <i class="fas ${types[type].icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm">${message}</p>
+                        </div>
+                        <button onclick="this.parentElement.parentElement.remove()" class="ml-auto">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            notification.classList.remove('hidden');
+            
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 5000);
+        }
+        
+        function getMinCheckoutDate() {
+            const today = new Date();
+            const minDate = new Date(today);
+            minDate.setDate(today.getDate() + 7);
+            return minDate.toISOString().split('T')[0];
+        }
+        
+        function refreshPayments() {
+            loadResidentData();
+            showNotification('Payments refreshed successfully!', 'success');
+        }
+        
+        function viewPaymentHistory() {
+            showSection('payments');
+        }
+        
+        function viewStayDetails() {
+            showSection('profile');
+        }
+        
+        function contactAdmin() {
+            const message = prompt('Enter your message for the admin:');
+            if (!message) return;
+            
+            // Log contact request
+            const contactLog = JSON.parse(localStorage.getItem('residentContacts') || '[]');
+            contactLog.push({
+                residentId: currentResident.id,
+                residentName: currentResident.fullName,
+                message: message,
+                timestamp: new Date().toISOString(),
+                status: 'unread'
+            });
+            localStorage.setItem('residentContacts', JSON.stringify(contactLog));
+            
+            showNotification('Message sent to admin. You will receive a response via WhatsApp or phone call.', 'success');
+        }
+        
+        // Modal functions
+        function showReportIssueModal() {
+            document.getElementById('reportIssueModal').classList.remove('hidden');
+        }
+        
+        function hideReportIssueModal() {
+            document.getElementById('reportIssueModal').classList.add('hidden');
+            document.getElementById('reportIssueForm').reset();
+        }
+        
+        function updateProfile() {
+            document.getElementById('updateProfileModal').classList.remove('hidden');
+        }
+        
+        function hideUpdateProfileModal() {
+            document.getElementById('updateProfileModal').classList.add('hidden');
+            document.getElementById('updateProfileForm').reset();
+        }
+        
+        function hidePaymentAlertModal() {
+            document.getElementById('paymentAlertModal').classList.add('hidden');
+        }
+        
+        function acceptHouseRules() {
+            localStorage.setItem(`rulesAccepted_${currentResident.id}`, 'true');
+            
+            // Update UI
+            const rulesStatus = document.getElementById('rulesStatus');
+            rulesStatus.className = 'px-3 py-1 text-sm font-medium rounded-full bg-emerald-100 text-emerald-800';
+            rulesStatus.textContent = 'Accepted';
+            
+            showNotification('Thank you for accepting the house rules!', 'success');
+        }
+        
+        function changePassword() {
+            const newPassword = prompt('Enter new password (minimum 6 characters):');
+            if (!newPassword) return;
+            
+            if (newPassword.length < 6) {
+                showNotification('Password must be at least 6 characters.', 'error');
+                return;
+            }
+            
+            const confirmPassword = prompt('Confirm new password:');
+            if (newPassword !== confirmPassword) {
+                showNotification('Passwords do not match.', 'error');
+                return;
+            }
+            
+            try {
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const residentIndex = residents.findIndex(r => r.id === currentResident.id);
+                
+                if (residentIndex === -1) return;
+                
+                // Update password (base64 encode)
+                residents[residentIndex].password = btoa(newPassword);
+                localStorage.setItem('approvedResidents', JSON.stringify(residents));
+                
+                showNotification('Password changed successfully!', 'success');
+                
+            } catch (e) {
+                console.error('Error changing password:', e);
+                showNotification('Error changing password. Please try again.', 'error');
+            }
+        }
+        
+        function toggleSidebar() {
+            const sidebar = document.getElementById('mobileSidebar');
+            sidebar.classList.toggle('hidden');
+            
+            if (!sidebar.classList.contains('hidden')) {
+                loadMobileSidebar();
+            }
+        }
+        
+        function loadMobileSidebar() {
+            const sidebar = document.getElementById('mobileSidebar').querySelector('div > div');
+            const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+            const resident = residents.find(r => r.id === currentResident.id);
+            
+            if (!resident) return;
+            
+            sidebar.innerHTML = `
+                <div class="p-6">
+                    <!-- Resident Info for Mobile -->
+                    <div class="text-center mb-8">
+                        <div class="w-20 h-20 rounded-full bg-gradient-to-r from-purple-600 to-purple-800 flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-user text-white text-2xl"></i>
+                        </div>
+                        <h3 class="font-bold text-slate-800">${resident.fullName}</h3>
+                        <p class="text-sm text-slate-600">Room: ${resident.roomAssigned || 'Not assigned'}</p>
+                        <div class="mt-2">
+                            <span class="px-2 py-1 text-xs font-medium rounded-full ${resident.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-amber-100 text-amber-800'}">
+                                ${resident.status || 'Active'}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Navigation for Mobile -->
+                    <div class="space-y-2 mb-8">
+                        <button onclick="showSection('dashboard'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'dashboard' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-tachometer-alt mr-3"></i>
+                            Dashboard
+                        </button>
+                        
+                        <button onclick="showSection('profile'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'profile' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-user-circle mr-3"></i>
+                            My Profile
+                        </button>
+
+                        <button onclick="showSection('payments'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'payments' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-money-bill-wave mr-3"></i>
+                            My Payments
+                        </button>
+                        
+                        <button onclick="showSection('issues'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'issues' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-exclamation-triangle mr-3"></i>
+                            Report Issue
+                        </button>
+                        
+                        <button onclick="showSection('rules'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'rules' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-file-contract mr-3"></i>
+                            House Rules
+                        </button>
+                        
+                        <button onclick="showSection('requests'); toggleSidebar();" 
+                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition ${currentSection === 'requests' ? 'sidebar-item active' : ''}">
+                            <i class="fas fa-calendar-check mr-3"></i>
+                            Check-out Request
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Actions for Mobile -->
+                    <div class="pt-6 border-t border-slate-200">
+                        <h4 class="font-bold text-slate-700 mb-3">Quick Actions</h4>
+                        <div class="space-y-2">
+                            <button onclick="showReportIssueModal(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-plus mr-2"></i>
+                                Report New Issue
+                            </button>
+                            <button onclick="contactAdmin(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-headset mr-2"></i>
+                                Contact Admin
+                            </button>
+                            <button onclick="viewPaymentHistory(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-history mr-2"></i>
+                                Payment History
+                            </button>
+                            <button onclick="viewStayDetails(); toggleSidebar();" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-calendar mr-2"></i>
+                                View Stay Details
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Emergency Contacts for Mobile -->
+                    <div class="mt-8 p-4 bg-red-50 border border-red-200 rounded-lg">
+                        <h4 class="font-bold text-red-800 mb-2">Emergency Contacts</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-user text-red-600"></i>
+                                <span>Caretaker Garry</span>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fas fa-phone text-red-600"></i>
+                                <a href="tel:+263711391414" class="text-red-700 hover:underline">
+                                    Emergency Call
+                                </a>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <i class="fab fa-whatsapp text-green-600"></i>
+                                <a href="https://wa.me/263771308790" target="_blank" class="text-red-700 hover:underline">
+                                    Emergency WhatsApp
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function toggleNotifications() {
+            const dropdown = document.getElementById('notificationDropdown');
+            dropdown.classList.toggle('hidden');
+            
+            if (!dropdown.classList.contains('hidden')) {
+                loadNotifications();
+            }
+        }
+        
+        function loadNotifications() {
+            try {
+                const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
+                const myOpenIssues = issues.filter(issue => 
+                    issue.reportedBy === currentResident.id && issue.status === 'open'
+                );
+                
+                const dropdown = document.getElementById('notificationDropdown');
+                
+                let notificationsHtml = `
+                    <div class="p-4 border-b border-slate-200">
+                        <h4 class="font-bold text-slate-800">Notifications</h4>
+                    </div>
+                    <div class="max-h-96 overflow-y-auto">
+                `;
+                
+                if (myOpenIssues.length === 0) {
+                    notificationsHtml += `
+                        <div class="p-4 text-center text-slate-500">
+                            No new notifications
+                        </div>
+                    `;
+                } else {
+                    myOpenIssues.slice(0, 5).forEach(issue => {
+                        notificationsHtml += `
+                            <div class="p-4 border-b border-slate-100 hover:bg-slate-50 cursor-pointer"
+                                 onclick="showSection('issues'); document.getElementById('notificationDropdown').classList.add('hidden');">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center">
+                                        <i class="fas fa-exclamation-triangle text-red-600 text-sm"></i>
+                                    </div>
+                                    <div class="flex-1">
+                                        <div class="text-sm font-medium text-slate-800">
+                                            Open Issue
+                                        </div>
+                                        <div class="text-xs text-slate-500">
+                                            ${issue.title}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        `;
+                    });
+                }
+                
+                notificationsHtml += `
+                    </div>
+                    <div class="p-4 border-t border-slate-200">
+                        <button onclick="showSection('issues'); document.getElementById('notificationDropdown').classList.add('hidden');" 
+                               class="text-sm text-blue-600 hover:text-blue-700">
+                            View all notifications
+                        </button>
+                    </div>
+                `;
+                
+                dropdown.innerHTML = notificationsHtml;
+                
+            } catch (e) {
+                console.error('Error loading notifications:', e);
+            }
+        }
+        
+        function updateCurrentTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('en-US', {
+                hour12: true,
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+            document.getElementById('currentTime').textContent = time;
+        }
+        
+        function logoutResident() {
+            if (confirm('Are you sure you want to logout?')) {
+                clearInterval(paymentCheckInterval);
+                localStorage.removeItem('currentResident');
+                window.location.href = 'resident-login.html';
+            }
+        }
+        
+        // Payment receipt functions
+        function viewReceipt(paymentId) {
+            try {
+                // Get payments from both storage locations
+                let payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === currentResident.id);
+                const combinedPayments = [...payments, ...residentPayments];
+                const payment = combinedPayments.find(p => p.id === paymentId);
+                
+                if (!payment) {
+                    showNotification('Receipt not found', 'error');
+                    return;
+                }
+                
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                currentReceipt = payment;
+                
+                const paymentDate = new Date(payment.date || payment.paymentDate);
+                const formattedDate = paymentDate.toLocaleDateString();
+                const formattedTime = paymentDate.toLocaleTimeString();
+                const amount = parseFloat(payment.amount || 0).toFixed(2);
+                const method = payment.method || payment.paymentMethod || 'Cash';
+                const month = payment.month || payment.forMonth || 'N/A';
+                const notes = payment.notes || 'No additional notes';
+                const recordedBy = payment.recordedBy || payment.adminName || 'Admin';
+                
+                document.getElementById('receiptContent').innerHTML = `
+                    <div class="text-center mb-6">
+                        <h4 class="text-xl font-bold text-slate-800">Gina's Hostel</h4>
+                        <p class="text-sm text-slate-600">Payment Receipt</p>
+                    </div>
+                    
+                    <div class="space-y-3">
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Receipt No:</span>
+                            <span class="font-medium">${payment.id}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Date:</span>
+                            <span class="font-medium">${formattedDate}</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-slate-600">Time:</span>
+                            <span class="font-medium">${formattedTime}</span>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Resident:</span>
+                                <span class="font-medium">${resident.fullName}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">Room:</span>
+                                <span class="font-medium">${resident.roomAssigned || 'N/A'}</span>
+                            </div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Payment Amount:</span>
+                                <span class="text-xl font-bold text-emerald-600">$${amount}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">Payment Method:</span>
+                                <span class="font-medium">${method}</span>
+                            </div>
+                            <div class="flex justify-between mt-1">
+                                <span class="text-slate-600">For Month:</span>
+                                <span class="font-medium">${month}</span>
+                            </div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="text-sm text-slate-600">Notes:</div>
+                            <div class="text-sm text-slate-700">${notes}</div>
+                        </div>
+                        <div class="border-t pt-3">
+                            <div class="flex justify-between">
+                                <span class="text-slate-600">Received by:</span>
+                                <span class="font-medium">${recordedBy}</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 p-3 bg-slate-50 rounded-lg">
+                        <p class="text-xs text-slate-600 text-center">
+                            This is an official receipt from Gina's Hostel. Please keep it for your records.
+                        </p>
+                    </div>
+                `;
+                
+                document.getElementById('receiptModal').classList.remove('hidden');
+                
+            } catch (e) {
+                console.error('Error viewing receipt:', e);
+                showNotification('Error loading receipt', 'error');
+            }
+        }
+        
+        function downloadReceiptPdf(paymentId) {
+            try {
+                // Get payments from both storage locations
+                let payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === currentResident.id);
+                const combinedPayments = [...payments, ...residentPayments];
+                const payment = combinedPayments.find(p => p.id === paymentId);
+                
+                if (!payment) {
+                    showNotification('Receipt not found', 'error');
+                    return;
+                }
+                
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                const paymentDate = new Date(payment.date || payment.paymentDate);
+                const formattedDate = paymentDate.toLocaleDateString();
+                const formattedTime = paymentDate.toLocaleTimeString();
+                const amount = parseFloat(payment.amount || 0).toFixed(2);
+                const method = payment.method || payment.paymentMethod || 'Cash';
+                const month = payment.month || payment.forMonth || 'N/A';
+                const notes = payment.notes || 'No additional notes';
+                const recordedBy = payment.recordedBy || payment.adminName || 'Admin';
+                
+                // Create receipt content as text
+                const receiptContent = `
+                    GINA'S HOSTEL - OFFICIAL RECEIPT
+                    =================================
+                    
+                    Receipt No: ${payment.id}
+                    Date: ${formattedDate}
+                    Time: ${formattedTime}
+                    
+                    ---------------------------------
+                    RESIDENT DETAILS:
+                    Name: ${resident.fullName}
+                    Room: ${resident.roomAssigned || 'N/A'}
+                    Resident ID: ${resident.id}
+                    
+                    ---------------------------------
+                    PAYMENT DETAILS:
+                    Amount: $${amount}
+                    Method: ${method}
+                    For Month: ${month}
+                    Notes: ${notes}
+                    
+                    ---------------------------------
+                    TRANSACTION INFO:
+                    Received by: ${recordedBy}
+                    Transaction ID: ${payment.id}
+                    
+                    =================================
+                    This is an official receipt from Gina's Hostel.
+                    Please keep this for your records.
+                    
+                    For any queries, contact:
+                    Emergency: +263 71 139 1414
+                    WhatsApp: +263 77 130 8790
+                    
+                    Generated: ${new Date().toLocaleString()}
+                `;
+                
+                // Create and download text file
+                const blob = new Blob([receiptContent], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `receipt_${payment.id}_${formattedDate.replace(/\//g, '-')}.txt`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('Receipt downloaded successfully!', 'success');
+                
+            } catch (e) {
+                console.error('Error downloading receipt:', e);
+                showNotification('Error downloading receipt', 'error');
+            }
+        }
+        
+        function downloadReceipt() {
+            if (currentReceipt) {
+                downloadReceiptPdf(currentReceipt.id);
+                hideReceiptModal();
+            }
+        }
+        
+        function hideReceiptModal() {
+            document.getElementById('receiptModal').classList.add('hidden');
+            currentReceipt = null;
+        }
+        
+        function exportPaymentHistory() {
+            try {
+                // Get payments from both storage locations
+                let payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const allPayments = JSON.parse(localStorage.getItem('payments') || '[]');
+                const residentPayments = allPayments.filter(p => p.residentId === currentResident.id);
+                const combinedPayments = [...payments, ...residentPayments];
+                const uniquePayments = Array.from(new Map(combinedPayments.map(p => [p.id, p])).values());
+                
+                const residents = JSON.parse(localStorage.getItem('approvedResidents') || '[]');
+                const resident = residents.find(r => r.id === currentResident.id);
+                
+                if (!resident) return;
+                
+                if (uniquePayments.length === 0) {
+                    showNotification('No payment history to export', 'info');
+                    return;
+                }
+                
+                // Create CSV content
+                let csvContent = 'Date,Amount,Method,For Month,Notes\n';
+                
+                uniquePayments.forEach(payment => {
+                    const date = new Date(payment.date || payment.paymentDate).toLocaleDateString();
+                    const amount = parseFloat(payment.amount || 0).toFixed(2);
+                    const method = payment.method || payment.paymentMethod || 'Cash';
+                    const month = payment.month || payment.forMonth || '';
+                    const notes = (payment.notes || '').replace(/,/g, ';');
+                    
+                    csvContent += `${date},$${amount},${method},${month},${notes}\n`;
+                });
+                
+                // Create and download CSV file
+                const blob = new Blob([csvContent], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `payment_history_${currentResident.id}_${new Date().toISOString().split('T')[0]}.csv`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification('Payment history exported successfully!', 'success');
+                
+            } catch (e) {
+                console.error('Error exporting payment history:', e);
+                showNotification('Error exporting payment history', 'error');
+            }
+        }
+    </script>
+</body>
+</html>
