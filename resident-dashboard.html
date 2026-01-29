@@ -142,10 +142,14 @@
             <div class="flex items-center justify-center gap-2">
                 <i class="fas fa-exclamation-triangle"></i>
                 <span class="text-sm">
-                    Emergency Contacts: Caretaker Garry 
-                    <a href="tel:+263711391414" class="font-bold underline">+263 71 139 1414</a>
-                    • WhatsApp 
-                    <a href="https://wa.me/263771308790" target="_blank" class="font-bold underline">+263 77 130 8790</a>
+                    Emergency Contacts Available:
+                    <a href="tel:+263711391414" class="font-bold ml-2">
+                        <i class="fas fa-phone mr-1"></i> Emergency Call
+                    </a>
+                    •
+                    <a href="https://wa.me/263771308790" target="_blank" class="font-bold ml-1">
+                        <i class="fab fa-whatsapp mr-1"></i> Emergency WhatsApp
+                    </a>
                 </span>
             </div>
         </div>
@@ -201,13 +205,6 @@
                             <span id="issueBadge" class="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded-full hidden">0</span>
                         </button>
                         
-                        <button onclick="showSection('payments')" 
-                                class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
-                                id="btnPayments">
-                            <i class="fas fa-money-bill-wave mr-3"></i>
-                            Payment History
-                        </button>
-                        
                         <button onclick="showSection('rules')" 
                                 class="w-full text-left p-3 rounded-lg hover:bg-purple-50 transition sidebar-item" 
                                 id="btnRules">
@@ -232,15 +229,15 @@
                                 <i class="fas fa-plus mr-2"></i>
                                 Report New Issue
                             </button>
-                            <button onclick="downloadPaymentReceipt()" 
-                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
-                                <i class="fas fa-download mr-2"></i>
-                                Download Receipt
-                            </button>
                             <button onclick="contactAdmin()" 
                                     class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
                                 <i class="fas fa-headset mr-2"></i>
                                 Contact Admin
+                            </button>
+                            <button onclick="viewStayDetails()" 
+                                    class="w-full text-left p-2 text-sm text-slate-600 hover:text-purple-600 transition">
+                                <i class="fas fa-calendar mr-2"></i>
+                                View Stay Details
                             </button>
                         </div>
                     </div>
@@ -255,11 +252,15 @@
                             </div>
                             <div class="flex items-center gap-2">
                                 <i class="fas fa-phone text-red-600"></i>
-                                <a href="tel:+263711391414" class="text-red-700 hover:underline">+263 71 139 1414</a>
+                                <a href="tel:+263711391414" class="text-red-700 hover:underline">
+                                    Emergency Call
+                                </a>
                             </div>
                             <div class="flex items-center gap-2">
                                 <i class="fab fa-whatsapp text-green-600"></i>
-                                <a href="https://wa.me/263771308790" target="_blank" class="text-red-700 hover:underline">+263 77 130 8790</a>
+                                <a href="https://wa.me/263771308790" target="_blank" class="text-red-700 hover:underline">
+                                    Emergency WhatsApp
+                                </a>
                             </div>
                         </div>
                     </div>
@@ -279,8 +280,8 @@
                             </div>
                             <div class="flex items-center gap-4">
                                 <div class="text-center">
-                                    <div class="text-3xl font-bold" id="currentBalance">$0</div>
-                                    <div class="text-sm opacity-90">Current Balance</div>
+                                    <div class="text-3xl font-bold" id="residentRoomNumber">Room 0</div>
+                                    <div class="text-sm opacity-90">Your Room</div>
                                 </div>
                             </div>
                         </div>
@@ -302,32 +303,32 @@
                             <div class="text-sm text-slate-600" id="issuesStatus">No issues reported</div>
                         </div>
                         
-                        <!-- Payments -->
-                        <div class="bg-white rounded-xl p-6 shadow-lg">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <div class="text-sm text-slate-500">Total Paid</div>
-                                    <div class="text-3xl font-bold text-emerald-600" id="totalPaid">$0</div>
-                                </div>
-                                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
-                                    <i class="fas fa-money-bill-wave text-emerald-600 text-xl"></i>
-                                </div>
-                            </div>
-                            <div class="text-sm text-slate-600" id="lastPayment">No payments yet</div>
-                        </div>
-                        
                         <!-- Stay Duration -->
                         <div class="bg-white rounded-xl p-6 shadow-lg">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
                                     <div class="text-sm text-slate-500">Days Stayed</div>
-                                    <div class="text-3xl font-bold text-blue-600" id="daysStayed">0</div>
+                                    <div class="text-3xl font-bold text-emerald-600" id="daysStayed">0</div>
                                 </div>
-                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
-                                    <i class="fas fa-calendar-alt text-blue-600 text-xl"></i>
+                                <div class="w-12 h-12 rounded-full bg-emerald-100 flex items-center justify-center">
+                                    <i class="fas fa-calendar-alt text-emerald-600 text-xl"></i>
                                 </div>
                             </div>
                             <div class="text-sm text-slate-600" id="checkinDate">Check-in: Loading...</div>
+                        </div>
+                        
+                        <!-- Room Status -->
+                        <div class="bg-white rounded-xl p-6 shadow-lg">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="text-sm text-slate-500">Room Status</div>
+                                    <div class="text-3xl font-bold text-blue-600" id="roomStatus">Active</div>
+                                </div>
+                                <div class="w-12 h-12 rounded-full bg-blue-100 flex items-center justify-center">
+                                    <i class="fas fa-home text-blue-600 text-xl"></i>
+                                </div>
+                            </div>
+                            <div class="text-sm text-slate-600" id="roomDetails">All services active</div>
                         </div>
                     </div>
                     
@@ -421,10 +422,6 @@
                                             <div class="text-lg font-bold text-purple-900" id="profileRoom">Loading...</div>
                                         </div>
                                         <div>
-                                            <div class="text-sm text-slate-600">Monthly Rent</div>
-                                            <div class="text-lg font-bold text-purple-900" id="profileRent">Loading...</div>
-                                        </div>
-                                        <div>
                                             <div class="text-sm text-slate-600">Check-in Date</div>
                                             <div class="font-medium text-slate-900" id="profileCheckin">Loading...</div>
                                         </div>
@@ -435,6 +432,10 @@
                                                     Active
                                                 </span>
                                             </div>
+                                        </div>
+                                        <div>
+                                            <div class="text-sm text-slate-600">Stay Duration</div>
+                                            <div class="font-medium text-slate-900" id="profileStayDuration">Loading...</div>
                                         </div>
                                     </div>
                                 </div>
@@ -518,61 +519,6 @@
                     </div>
                 </div>
 
-                <!-- Payments Section -->
-                <div id="sectionPayments" class="hidden animate-fadeIn">
-                    <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-2xl font-bold text-slate-800">Payment History</h2>
-                            <button onclick="downloadPaymentHistory()" 
-                                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition">
-                                <i class="fas fa-download mr-2"></i>
-                                Download History
-                            </button>
-                        </div>
-                        
-                        <!-- Payment Summary -->
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                            <div class="bg-emerald-50 p-6 rounded-lg">
-                                <div class="text-sm text-emerald-700">Total Paid</div>
-                                <div class="text-3xl font-bold text-emerald-900" id="paymentTotalPaid">$0</div>
-                            </div>
-                            <div class="bg-amber-50 p-6 rounded-lg">
-                                <div class="text-sm text-amber-700">Current Balance</div>
-                                <div class="text-3xl font-bold text-amber-900" id="paymentBalance">$0</div>
-                            </div>
-                            <div class="bg-blue-50 p-6 rounded-lg">
-                                <div class="text-sm text-blue-700">Monthly Rent</div>
-                                <div class="text-3xl font-bold text-blue-900" id="paymentMonthlyRent">$0</div>
-                            </div>
-                        </div>
-                        
-                        <!-- Payment History Table -->
-                        <div class="overflow-x-auto">
-                            <table class="min-w-full divide-y divide-gray-200" id="paymentHistoryTable">
-                                <thead class="bg-gray-50">
-                                    <tr>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">For Month</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
-                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Receipt</th>
-                                    </tr>
-                                </thead>
-                                <tbody class="bg-white divide-y divide-gray-200" id="paymentHistoryBody">
-                                    <!-- Payments will be loaded here -->
-                                </tbody>
-                            </table>
-                        </div>
-                        
-                        <div id="noPayments" class="text-center py-8 hidden">
-                            <i class="fas fa-money-bill-wave text-4xl text-gray-400 mb-4"></i>
-                            <h3 class="text-lg font-semibold text-slate-700">No Payment Records</h3>
-                            <p class="text-slate-600 mt-2">Your payment history will appear here once payments are recorded.</p>
-                        </div>
-                    </div>
-                </div>
-
                 <!-- House Rules Section -->
                 <div id="sectionRules" class="hidden animate-fadeIn">
                     <div class="bg-white rounded-xl shadow-lg p-6 mb-6">
@@ -625,32 +571,6 @@
                                 </ul>
                             </div>
                             
-                            <!-- Payment Rules -->
-                            <div class="border border-slate-200 rounded-lg p-6">
-                                <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
-                                    <i class="fas fa-money-bill-wave text-emerald-600"></i>
-                                    Payment Rules
-                                </h3>
-                                <ul class="space-y-3 text-slate-700">
-                                    <li class="flex items-start gap-2">
-                                        <i class="fas fa-calendar text-slate-500 mt-1"></i>
-                                        <span>Rent is due on the 1st of every month.</span>
-                                    </li>
-                                    <li class="flex items-start gap-2">
-                                        <i class="fas fa-clock text-slate-500 mt-1"></i>
-                                        <span>Late payments incur a 10% penalty after the 5th of the month.</span>
-                                    </li>
-                                    <li class="flex items-start gap-2">
-                                        <i class="fas fa-receipt text-slate-500 mt-1"></i>
-                                        <span>Always request and keep your payment receipt.</span>
-                                    </li>
-                                    <li class="flex items-start gap-2">
-                                        <i class="fas fa-ban text-slate-500 mt-1"></i>
-                                        <span>Non-payment for 2 consecutive months may result in eviction.</span>
-                                    </li>
-                                </ul>
-                            </div>
-                            
                             <!-- Facility Rules -->
                             <div class="border border-slate-200 rounded-lg p-6">
                                 <h3 class="font-bold text-slate-800 mb-4 flex items-center gap-2">
@@ -686,11 +606,11 @@
                                 <ul class="space-y-3 text-slate-700">
                                     <li class="flex items-start gap-2">
                                         <i class="fas fa-phone text-slate-500 mt-1"></i>
-                                        <span>Emergency contact: Caretaker Garry +263 71 139 1414</span>
+                                        <span>Emergency Call: Use the Emergency Call button available in the dashboard</span>
                                     </li>
                                     <li class="flex items-start gap-2">
                                         <i class="fab fa-whatsapp text-slate-500 mt-1"></i>
-                                        <span>WhatsApp emergency: +263 77 130 8790</span>
+                                        <span>Emergency WhatsApp: Use the Emergency WhatsApp button for immediate assistance</span>
                                     </li>
                                     <li class="flex items-start gap-2">
                                         <i class="fas fa-fire-extinguisher text-slate-500 mt-1"></i>
@@ -734,7 +654,7 @@
                                         <h3 class="font-bold text-slate-700 mb-4">Submit Check-out Request</h3>
                                         <p class="text-slate-600 mb-6">
                                             Please submit your check-out request at least 7 days before your intended departure date.
-                                            All outstanding balances must be cleared before check-out.
+                                            All procedures will be handled by administration.
                                         </p>
                                     </div>
                                     
@@ -792,7 +712,7 @@
                                             <ul class="space-y-2 text-sm text-slate-600">
                                                 <li class="flex items-start gap-2">
                                                     <i class="fas fa-check text-emerald-600 mt-0.5"></i>
-                                                    <span>Clear all outstanding balances</span>
+                                                    <span>Complete room inspection with administration</span>
                                                 </li>
                                                 <li class="flex items-start gap-2">
                                                     <i class="fas fa-check text-emerald-600 mt-0.5"></i>
@@ -804,30 +724,29 @@
                                                 </li>
                                                 <li class="flex items-start gap-2">
                                                     <i class="fas fa-check text-emerald-600 mt-0.5"></i>
-                                                    <span>Room inspection must be passed</span>
+                                                    <span>Complete final settlement procedures</span>
                                                 </li>
                                             </ul>
                                         </div>
                                         
                                         <div>
-                                            <h4 class="font-bold text-slate-700 mb-2">Your Current Status</h4>
+                                            <h4 class="font-bold text-slate-700 mb-2">Your Stay Details</h4>
                                             <div class="space-y-3">
                                                 <div class="flex justify-between">
-                                                    <span class="text-slate-600">Current Balance:</span>
-                                                    <span id="checkoutBalance" class="font-medium">$0</span>
+                                                    <span class="text-slate-600">Current Room:</span>
+                                                    <span id="checkoutRoom" class="font-medium">Loading...</span>
                                                 </div>
                                                 <div class="flex justify-between">
-                                                    <span class="text-slate-600">Security Deposit:</span>
-                                                    <span id="securityDeposit" class="font-medium">$50</span>
+                                                    <span class="text-slate-600">Check-in Date:</span>
+                                                    <span id="checkoutCheckin" class="font-medium">Loading...</span>
                                                 </div>
                                                 <div class="flex justify-between">
-                                                    <span class="text-slate-600">Key Deposit:</span>
-                                                    <span id="keyDeposit" class="font-medium">$20</span>
+                                                    <span class="text-slate-600">Days Stayed:</span>
+                                                    <span id="checkoutDays" class="font-medium">0</span>
                                                 </div>
                                                 <div class="border-t pt-3">
-                                                    <div class="flex justify-between font-bold">
-                                                        <span>Total Refundable:</span>
-                                                        <span id="totalRefund" class="text-emerald-600">$70</span>
+                                                    <div class="text-sm text-slate-600">
+                                                        All final settlements will be processed during check-out procedure.
                                                     </div>
                                                 </div>
                                             </div>
@@ -839,7 +758,7 @@
                                                 <li>• Request submission: Immediate</li>
                                                 <li>• Admin approval: 1-2 business days</li>
                                                 <li>• Room inspection: Day of check-out</li>
-                                                <li>• Deposit refund: 3-5 business days</li>
+                                                <li>• Final procedures: Day of check-out</li>
                                             </ul>
                                         </div>
                                     </div>
@@ -936,22 +855,6 @@
                         <textarea id="issueDescription" rows="4" required
                                class="w-full border border-slate-300 rounded-lg px-4 py-3 text-sm focus:ring-2 focus:ring-red-500 focus:border-red-500 transition"
                                placeholder="Please provide as much detail as possible..."></textarea>
-                    </div>
-                    
-                    <div>
-                        <label class="block text-sm font-medium text-slate-700 mb-1">
-                            Upload Photos (Optional)
-                        </label>
-                        <div class="border-2 border-dashed border-slate-300 rounded-lg p-4 text-center">
-                            <i class="fas fa-cloud-upload-alt text-slate-400 text-2xl mb-2"></i>
-                            <p class="text-sm text-slate-500">Drag & drop photos or click to browse</p>
-                            <p class="text-xs text-slate-400 mt-1">Max 3 photos, 5MB each</p>
-                            <input type="file" id="issuePhotos" multiple accept="image/*" class="hidden">
-                            <button type="button" onclick="document.getElementById('issuePhotos').click()" 
-                                    class="mt-2 px-4 py-2 bg-slate-100 text-slate-700 rounded-lg hover:bg-slate-200 transition">
-                                Select Files
-                            </button>
-                        </div>
                     </div>
                     
                     <div class="pt-4">
@@ -1073,6 +976,8 @@
             document.getElementById('welcomeMessage').textContent = `Welcome back, ${resident.firstName}!`;
             document.getElementById('sidebarResidentName').textContent = resident.fullName;
             document.getElementById('sidebarResidentRoom').textContent = `Room: ${resident.roomAssigned || 'Not assigned'}`;
+            document.getElementById('residentRoomNumber').textContent = resident.roomAssigned || 'Not assigned';
+            document.getElementById('checkoutRoom').textContent = resident.roomAssigned || 'Not assigned';
             
             // Update last login
             const lastLogin = new Date(currentResident.loginTime);
@@ -1087,51 +992,45 @@
             document.getElementById('profileIdNumber').textContent = resident.idNumber;
             document.getElementById('profileResidentId').textContent = resident.id;
             document.getElementById('profileRoom').textContent = resident.roomAssigned || 'Not assigned';
-            document.getElementById('profileRent').textContent = resident.monthlyRent ? `$${resident.monthlyRent}` : 'Not set';
             document.getElementById('profileCheckin').textContent = resident.checkinDate ? new Date(resident.checkinDate).toLocaleDateString() : 'Not available';
             document.getElementById('profileEmergencyName').textContent = resident.emergencyName;
             document.getElementById('profileEmergencyPhone').textContent = resident.emergencyPhone;
+            
+            // Calculate and update stay duration
+            if (resident.checkinDate) {
+                const checkinDate = new Date(resident.checkinDate);
+                const today = new Date();
+                const daysStayed = Math.floor((today - checkinDate) / (1000 * 60 * 60 * 24));
+                document.getElementById('profileStayDuration').textContent = `${daysStayed} days`;
+                document.getElementById('checkoutDays').textContent = daysStayed;
+                document.getElementById('checkoutCheckin').textContent = new Date(resident.checkinDate).toLocaleDateString();
+            }
             
             // Update status indicators
             const statusSpan = document.getElementById('profileStatus');
             if (resident.status === 'active') {
                 statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800';
                 statusSpan.textContent = 'Active';
+                document.getElementById('roomStatus').textContent = 'Active';
+                document.getElementById('roomDetails').textContent = 'All services active';
             } else if (resident.status === 'inactive') {
                 statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800';
                 statusSpan.textContent = 'Inactive';
+                document.getElementById('roomStatus').textContent = 'Inactive';
+                document.getElementById('roomDetails').textContent = 'Contact administration';
             } else {
                 statusSpan.className = 'px-2 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800';
                 statusSpan.textContent = resident.status;
+                document.getElementById('roomStatus').textContent = resident.status;
+                document.getElementById('roomDetails').textContent = 'Pending update';
             }
             
             // Update check-out section
-            document.getElementById('checkoutBalance').textContent = `$${calculateBalance(resident)}`;
             document.getElementById('checkoutDate').min = getMinCheckoutDate();
         }
         
         // Update dashboard statistics
         function updateDashboardStats(resident) {
-            // Calculate balance
-            const balance = calculateBalance(resident);
-            document.getElementById('currentBalance').textContent = `$${balance.toFixed(2)}`;
-            document.getElementById('paymentBalance').textContent = `$${balance.toFixed(2)}`;
-            
-            // Calculate total paid
-            const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
-            const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-            document.getElementById('totalPaid').textContent = `$${totalPaid.toFixed(2)}`;
-            document.getElementById('paymentTotalPaid').textContent = `$${totalPaid.toFixed(2)}`;
-            
-            // Update monthly rent
-            document.getElementById('paymentMonthlyRent').textContent = resident.monthlyRent ? `$${resident.monthlyRent}` : '$0';
-            
-            // Update last payment
-            if (payments.length > 0) {
-                const lastPayment = payments[payments.length - 1];
-                document.getElementById('lastPayment').textContent = `Last: $${lastPayment.amount} on ${new Date(lastPayment.date).toLocaleDateString()}`;
-            }
-            
             // Calculate days stayed
             if (resident.checkinDate) {
                 const checkinDate = new Date(resident.checkinDate);
@@ -1144,24 +1043,6 @@
             // Load issues
             loadMyIssuesStats();
             loadRecentActivity();
-        }
-        
-        // Calculate resident balance
-        function calculateBalance(resident) {
-            const payments = JSON.parse(localStorage.getItem(`payments_${resident.id}`) || '[]');
-            const totalPaid = payments.reduce((sum, payment) => sum + parseFloat(payment.amount), 0);
-            const monthlyRent = parseFloat(resident.monthlyRent) || 0;
-            
-            // For simplicity, we assume rent is due monthly from check-in date
-            if (resident.checkinDate) {
-                const checkinDate = new Date(resident.checkinDate);
-                const today = new Date();
-                const monthsStayed = (today.getFullYear() - checkinDate.getFullYear()) * 12 + (today.getMonth() - checkinDate.getMonth());
-                const totalRentDue = monthsStayed * monthlyRent;
-                return Math.max(0, totalRentDue - totalPaid);
-            }
-            
-            return 0;
         }
         
         // Load my issues statistics
@@ -1214,12 +1095,11 @@
         function loadRecentActivity() {
             try {
                 const issues = JSON.parse(localStorage.getItem('reportedIssues') || '[]');
-                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
+                const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
                 
                 let activities = [];
                 
                 // Add recent issues
-                const myIssues = issues.filter(issue => issue.reportedBy === currentResident.id);
                 myIssues.slice(-3).reverse().forEach(issue => {
                     activities.push({
                         type: 'issue',
@@ -1230,16 +1110,16 @@
                     });
                 });
                 
-                // Add recent payments
-                payments.slice(-3).reverse().forEach(payment => {
+                // Add system notifications
+                if (myIssues.length === 0) {
                     activities.push({
-                        type: 'payment',
-                        text: `Payment: $${payment.amount}`,
-                        status: 'paid',
-                        time: payment.date,
-                        icon: 'fas fa-money-bill-wave'
+                        type: 'info',
+                        text: 'No issues reported. All systems normal.',
+                        status: 'active',
+                        time: new Date().toISOString(),
+                        icon: 'fas fa-check-circle'
                     });
-                });
+                }
                 
                 // Sort by time and display
                 activities.sort((a, b) => new Date(b.time) - new Date(a.time));
@@ -1260,7 +1140,7 @@
                                 <span class="text-xs px-2 py-1 rounded-full
                                     ${activity.status === 'open' ? 'bg-red-100 text-red-800' :
                                       activity.status === 'in-progress' ? 'bg-amber-100 text-amber-800' :
-                                      activity.status === 'paid' ? 'bg-emerald-100 text-emerald-800' :
+                                      activity.status === 'resolved' ? 'bg-emerald-100 text-emerald-800' :
                                       'bg-blue-100 text-blue-800'}">
                                     ${activity.status}
                                 </span>
@@ -1314,9 +1194,6 @@
                     break;
                 case 'issues':
                     loadIssues();
-                    break;
-                case 'payments':
-                    loadPayments();
                     break;
                 case 'rules':
                     loadRules();
@@ -1402,57 +1279,6 @@
                 
             } catch (e) {
                 console.error('Error loading issues:', e);
-            }
-        }
-        
-        // Load payments data
-        function loadPayments() {
-            try {
-                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
-                const tbody = document.getElementById('paymentHistoryBody');
-                const noPaymentsDiv = document.getElementById('noPayments');
-                
-                if (payments.length === 0) {
-                    tbody.innerHTML = '';
-                    noPaymentsDiv.classList.remove('hidden');
-                    return;
-                }
-                
-                noPaymentsDiv.classList.add('hidden');
-                
-                // Sort by date (newest first)
-                payments.sort((a, b) => new Date(b.date) - new Date(a.date));
-                
-                tbody.innerHTML = payments.map(payment => `
-                    <tr>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            ${new Date(payment.date).toLocaleDateString()}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-emerald-600">
-                            $${parseFloat(payment.amount).toFixed(2)}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            ${payment.method || 'Cash'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
-                            ${payment.month || 'N/A'}
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-emerald-100 text-emerald-800">
-                                Paid
-                            </span>
-                        </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm">
-                            <button onclick="generateReceipt('${payment.id}')" 
-                                    class="text-blue-600 hover:text-blue-800">
-                                <i class="fas fa-download"></i>
-                            </button>
-                        </td>
-                    </tr>
-                `).join('');
-                
-            } catch (e) {
-                console.error('Error loading payments:', e);
             }
         }
         
@@ -1783,46 +1609,9 @@
             alert('Message sent to admin. You will receive a response via WhatsApp or phone call.');
         }
         
-        // Download payment history
-        function downloadPaymentHistory() {
-            try {
-                const payments = JSON.parse(localStorage.getItem(`payments_${currentResident.id}`) || '[]');
-                
-                if (payments.length === 0) {
-                    alert('No payment history available.');
-                    return;
-                }
-                
-                let csvContent = "Date,Amount,Method,For Month,Status\n";
-                payments.forEach(payment => {
-                    csvContent += `${new Date(payment.date).toLocaleDateString()},${payment.amount},${payment.method || 'Cash'},${payment.month || 'N/A'},Paid\n`;
-                });
-                
-                const blob = new Blob([csvContent], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `payment_history_${currentResident.id}.csv`;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(url);
-                
-            } catch (e) {
-                console.error('Error downloading payment history:', e);
-                alert('Error downloading payment history.');
-            }
-        }
-        
-        // Generate receipt
-        function generateReceipt(paymentId) {
-            alert('Receipt generation feature would create a PDF receipt here.');
-            // In a real implementation, this would generate a PDF receipt
-        }
-        
-        // Download payment receipt
-        function downloadPaymentReceipt() {
-            alert('This would download your latest payment receipt.');
+        // View stay details
+        function viewStayDetails() {
+            showSection('profile');
         }
         
         // Toggle sidebar on mobile
